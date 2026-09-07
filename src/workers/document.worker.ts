@@ -75,8 +75,11 @@ export const documentWorker = new Worker('document-processing-queue', async job 
     
     const folder = await FolderModel.findById(folderId);
     const variables = {
-      folderName: folder?.name,
-      folderDescription: folder?.description,
+      folderName: folder?.name || '',
+      folderDescription: folder?.description || '',
+      documentText: extractedText ? extractedText.substring(0, 35000) : (description || originalName || ''),
+      fileName: originalName || 'uploaded_document',
+      fileType: fileType || 'application/pdf',
       folderAnalytics: JSON.stringify(folder?.analyticsMetrics || { totalDocuments: 1, lastProcessed: new Date().toISOString() })
     };
 

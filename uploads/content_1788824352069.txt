@@ -1,0 +1,14 @@
+CMPDI Operational & Geological Performance Report
+Subsidiary: Northern Coalfields Limited (NCL)
+Coalfield: Singrauli OpenCast Coalfield
+Financial Year: 2023-24
+Total Raw Coal Extracted: 18.75 Million Tonnes
+Total Overburden Removal: 42.10 Million Cubic Meters
+Stripping Ratio: 2.25
+Coal Grade: G11 Non-Coking Bituminous
+Average GCV: 4100 Kcal/kg
+Average Ash Content: 32.4%
+Total Moisture: 9.8%
+DGMS Safety Compliance Rating: 98.4%
+HEMM Equipment Availability: 89.2%
+Railway Rake Allocation & Dispatch: 16.40 MT sent to NTPC Vindhyachal & Singrauli STPS.

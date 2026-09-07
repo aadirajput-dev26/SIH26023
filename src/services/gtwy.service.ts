@@ -131,20 +131,39 @@ export const extractGtwyContent = (raw: any): string => {
 
 export const callGtwyChatAgent = async (agentId: string, threadId: string, userPrompt: string, variables: any = {}) => {
   const apiKey = process.env.GTWY_API_KEY || GTWY_API_KEY;
-  const response = await axios.post('https://api.gtwy.ai/api/v2/model/chat/completion', {
-    user: userPrompt,
-    agent_id: agentId,
-    thread_id: threadId,
-    response_type: "text",
-    variables
-  }, {
-    headers: {
-      'pauthkey': apiKey,
-      'Content-Type': 'application/json'
-    },
-    timeout: 300000
-  });
-  return response.data;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+  try {
+    const res = await fetch('https://api.gtwy.ai/api/v2/model/chat/completion', {
+      method: 'POST',
+      headers: {
+        'pauthkey': apiKey || '',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user: userPrompt,
+        agent_id: agentId,
+        thread_id: threadId,
+        response_type: "text",
+        variables
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`GTWY Agent error: ${res.status} ${errText}`);
+    }
+
+    const rawText = await res.text();
+    return rawText;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
 };
 
 export const streamGtwyChatAgent = async (
