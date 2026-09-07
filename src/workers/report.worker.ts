@@ -2,8 +2,8 @@ import { Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import dotenv from 'dotenv';
 import FolderModel from '../models/Folder';
-// In a real scenario, this would use LangChain's MapReduceDocumentsChain or similar
-import { ChatOpenAI } from '@langchain/openai';
+import DocumentModel from '../models/Document';
+import { callGtwyChatAgent, extractGtwyContent } from '../services/gtwy.service';
 
 dotenv.config();
 
@@ -12,43 +12,78 @@ const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379'
 });
 
 export const reportWorker = new Worker('report-generation-queue', async job => {
-  const { folderId, prompt } = job.data;
-  console.log(`Starting report generation for folder ${folderId}`);
+  const { folderId, title, prompt, instructions, reportType, audience, format, customVariables } = job.data;
+  console.log(`[ReportWorker] Starting report generation for folder ${folderId} with title: ${title}`);
 
   try {
     const folder = await FolderModel.findById(folderId);
     if (!folder) throw new Error('Folder not found');
 
-    // Use Langchain to generate a professional report using aggregated analytics
-    console.log(`Executing LangChain report generation for folder ${folder.name}...`);
+    // Fetch all documents for this folder to pass into variables
+    const docs = await DocumentModel.find({ folderId: folder._id });
     
-    const llm = new ChatOpenAI({ modelName: 'gpt-4o', temperature: 0.2 });
-    const reportPrompt = `
-      You are an expert mining and geological analyst for CMPDI/CIL.
-      Generate a comprehensive, professional report based on the following aggregated document analytics.
-      User Prompt/Focus: ${prompt}
-      
-      Folder Context & Analytics:
-      ${JSON.stringify(folder.analyticsMetrics, null, 2)}
-      
-      Output the report in Markdown format with clear headings, an executive summary, and key findings.
-    `;
+    // Create rich summary of documents
+    const documentsSummary = docs.map(doc => ({
+      name: doc.originalName,
+      title: doc.title || doc.originalName,
+      description: (doc as any).description || doc.originalName,
+      mimetype: doc.mimetype,
+      status: doc.status,
+      topic: doc.analytics?.topic,
+      summary: doc.analytics?.summary,
+      extractedMetrics: doc.analytics?.extractedMetrics,
+    }));
 
-    const response = await llm.invoke(reportPrompt);
+    const agentId = process.env.GTWY_REPORT_GENERATION_AGENT_ID || '6a9f17ef0869a6b2a2333e34';
+    const threadId = `folder_${folder._id}_report_${Date.now()}`;
+    const userPrompt = prompt || instructions || 'Generate a comprehensive, detailed, professional report based on the following folder context and documents.';
+
+    const variables = {
+      folderName: folder.name,
+      folderDescription: folder.description || '',
+      reportTitle: title || `Report for ${folder.name}`,
+      userInstructions: instructions || prompt || '',
+      instructions: instructions || prompt || '',
+      prompt: prompt || instructions || '',
+      reportType: reportType || 'Comprehensive Operational Report',
+      audience: audience || 'Executive & Mine Leadership',
+      format: format || 'Detailed Markdown Report',
+      documentsList: JSON.stringify(documentsSummary, null, 2),
+      folderAnalytics: JSON.stringify(folder.analyticsMetrics || {}, null, 2),
+      ...(customVariables || {})
+    };
+
+    console.log(`[ReportWorker] Calling GTWY report agent (${agentId}) for folder: ${folder.name}...`);
+    const gtwyData = await callGtwyChatAgent(agentId, threadId, userPrompt, variables);
+
+    const rawContent = extractGtwyContent(gtwyData);
 
     const generatedReport = {
-      title: `Generated Report for ${folder.name}`,
-      content: response.content,
+      title: title || `Analysis Report - ${folder.name}`,
+      content: rawContent || 'Report generated with no content.',
       createdAt: new Date()
     };
 
+    folder.reports = folder.reports || [];
+    folder.reports.push(generatedReport as any);
+    await folder.save();
+
+    console.log(`[ReportWorker] Successfully generated and stored report for folder: ${folder.name}`);
     return { success: true, report: generatedReport };
   } catch (error: any) {
-    console.error(`Report job failed:`, error.message);
+    console.error(`[ReportWorker] Report job failed:`, error.message);
     throw error;
   }
-}, { connection });
+}, { 
+  connection,
+  lockDuration: 300000,
+  stalledInterval: 300000
+});
 
 reportWorker.on('completed', job => {
-  console.log(`Report Job ${job.id} has completed!`);
+  console.log(`[ReportWorker] Report Job ${job.id} has completed!`);
+});
+
+reportWorker.on('failed', (job, err) => {
+  console.error(`[ReportWorker] Report Job ${job?.id} failed: ${err.message}`);
 });

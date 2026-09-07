@@ -6,13 +6,24 @@ const router = Router();
 router.get('/:id', async (req, res) => {
   try {
     const jobId = req.params.id;
-    // Check both queues
-    let job = await documentQueue.getJob(jobId);
-    let queueName = 'document-processing';
-    
-    if (!job) {
+    const requestedQueue = req.query.queue as string;
+    let job = null;
+    let queueName = '';
+
+    if (requestedQueue === 'report' || jobId.startsWith('report_')) {
       job = await reportQueue.getJob(jobId);
       queueName = 'report-generation';
+      if (!job) {
+        job = await documentQueue.getJob(jobId);
+        queueName = 'document-processing';
+      }
+    } else {
+      job = await documentQueue.getJob(jobId);
+      queueName = 'document-processing';
+      if (!job) {
+        job = await reportQueue.getJob(jobId);
+        queueName = 'report-generation';
+      }
     }
 
     if (!job) {

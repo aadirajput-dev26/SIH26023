@@ -1,0 +1,256 @@
+COAL PRODUCTION & MINING PERFORMANCE REPORT
+Financial Year: 2023-24
+Organization: Central Coalfields Limited (CCL)
+Region: Jharkhand, India
+
+============================================================
+1. EXECUTIVE PRODUCTION METRICS
+============================================================
+
+Total Coal Production: 76.42 Million Tonnes (MT)
+Annual Production Target: 78.00 MT
+Production Achievement: 98.0%
+Previous Year Production (2022-23): 73.15 MT
+Year-on-Year Growth: 4.47%
+
+Total Coal Dispatch: 74.86 MT
+Dispatch Target: 76.50 MT
+Dispatch Achievement: 97.86%
+
+Overburden Removal: 412.60 Million Cubic Metres (MCM)
+Stripping Ratio: 5.40 m³/tonne
+
+Total Excavation: 489.02 MCM
+Average Daily Production: 209,370 tonnes/day
+
+============================================================
+2. MONTH-WISE COAL PRODUCTION
+============================================================
+
+Month          Target (MT)    Actual (MT)    Achievement
+------------------------------------------------------------
+April 2023        6.10           5.84          95.74%
+May 2023          6.40           6.18          96.56%
+June 2023         5.80           5.51          95.00%
+July 2023         5.90           5.76          97.63%
+August 2023       6.00           5.93          98.83%
+September 2023    6.20           6.14          99.03%
+October 2023      6.50           6.42          98.77%
+November 2023     6.30           6.25          99.21%
+December 2023     6.40           6.37          99.53%
+January 2024      6.70           6.65          99.25%
+February 2024     6.50           6.61         101.69%
+March 2024        8.20           8.76         106.83%
+
+Annual Total      76.00          76.42         100.55%
+
+============================================================
+3. MINE-WISE PRODUCTION
+============================================================
+
+Mine Name                  Production (MT)    Target (MT)
+------------------------------------------------------------
+Piparwar OCP                  12.84              13.20
+Ashoka OCP                     9.72              10.00
+Magadh OCP                     8.91               9.10
+Amrapali OCP                   7.84               8.00
+Kedla OCP                      6.43               6.60
+Rajrappa OCP                   5.87               6.00
+Karma OCP                      4.96               5.20
+Dakra OCP                      4.42               4.50
+Gidi A                         3.84               3.90
+Gidi C                         3.21               3.40
+Other Mines                    8.38               8.10
+
+Total                         76.42              78.00
+
+============================================================
+4. COAL QUALITY METRICS
+============================================================
+
+Average Gross Calorific Value (GCV): 4,850 kcal/kg
+Average Ash Content: 29.4%
+Average Moisture Content: 5.8%
+Average Sulphur Content: 0.52%
+
+Grade Distribution:
+
+Grade       Production (MT)     Percentage
+--------------------------------------------
+G5              8.42               11.02%
+G6             14.82               19.39%
+G7             21.74               28.45%
+G8             18.63               24.38%
+G9              9.87               12.92%
+G10             3.94                5.15%
+
+============================================================
+5. PRODUCTIVITY METRICS
+============================================================
+
+Total Workforce: 38,420 employees
+
+Output per Employee:
+2022-23: 1,903 tonnes/employee/year
+2023-24: 1,989 tonnes/employee/year
+
+Productivity Growth: 4.52%
+
+OB Removal per Employee:
+2022-23: 9,842 m³/employee
+2023-24: 10,742 m³/employee
+
+Heavy Earth Moving Machinery Availability: 87.6%
+
+Average Equipment Utilization: 82.4%
+
+============================================================
+6. SAFETY METRICS
+============================================================
+
+Total Reportable Accidents: 42
+Fatal Accidents: 4
+Serious Accidents: 17
+Minor Accidents: 21
+
+Fatality Rate:
+2022-23: 0.118 per million tonnes
+2023-24: 0.104 per million tonnes
+
+Lost Time Injury Frequency Rate (LTIFR): 0.42
+
+Safety Training Hours: 184,620 hours
+
+Employees Receiving Safety Training: 36,874
+
+============================================================
+7. EXPLORATION & GEOLOGICAL METRICS
+============================================================
+
+Total Exploration Area: 214.60 sq. km
+
+Number of Boreholes Drilled: 186
+
+Total Drilling: 92,450 metres
+
+Average Borehole Depth: 497 metres
+
+Coal Seams Identified: 27
+
+Major Seam Thickness Range:
+2.1 metres – 8.7 metres
+
+Estimated Geological Resources Identified:
+1,284.60 Million Tonnes
+
+Measured Resources:
+842.30 Million Tonnes
+
+Indicated Resources:
+317.40 Million Tonnes
+
+Inferred Resources:
+124.90 Million Tonnes
+
+============================================================
+8. ENVIRONMENTAL METRICS
+============================================================
+
+Total Mine Area: 14,820 hectares
+
+Reclaimed Area: 1,284 hectares
+
+Progressive Mine Reclamation: 68.4%
+
+Trees Planted: 1,842,600
+
+Survival Rate: 82.7%
+
+Water Recycled: 4.82 Million Kilolitres
+
+Dust Suppression Systems Installed: 146
+
+============================================================
+9. FINANCIAL / OPERATIONAL METRICS
+============================================================
+
+Average Cost of Production:
+₹1,482 per tonne
+
+Previous Year:
+₹1,421 per tonne
+
+Cost Increase:
+4.29%
+
+Average Realization:
+₹2,874 per tonne
+
+Operating Margin:
+₹1,392 per tonne
+
+Total Operating Expenditure:
+₹113,260 crore
+
+Capital Expenditure:
+₹8,420 crore
+
+============================================================
+10. YEAR-ON-YEAR PERFORMANCE
+============================================================
+
+Metric                     2022-23       2023-24      Growth
+-------------------------------------------------------------
+Production (MT)              73.15         76.42       4.47%
+Dispatch (MT)                71.92         74.86       4.09%
+OB Removal (MCM)            386.40        412.60       6.78%
+Workforce                   38,910        38,420      -1.26%
+Productivity (t/employee)    1,903         1,989       4.52%
+GCV (kcal/kg)                4,910         4,850      -1.22%
+Cost/tonne (₹)               1,421         1,482       4.29%
+
+============================================================
+11. KEY OBSERVATIONS
+============================================================
+
+1. Coal production increased from 73.15 MT in 2022-23
+   to 76.42 MT in 2023-24.
+
+2. Production growth was 4.47% year-on-year.
+
+3. February and March recorded production above the
+   corresponding monthly targets.
+
+4. Piparwar OCP was the highest producing mine with
+   12.84 MT.
+
+5. Employee productivity improved by 4.52%.
+
+6. Overburden removal increased by 6.78%.
+
+7. Average production cost increased by 4.29%.
+
+8. Fatality rate declined from 0.118 to 0.104 per
+   million tonnes.
+
+9. Total exploration drilling reached 92,450 metres.
+
+10. Reclaimed mine area reached 1,284 hectares.
+
+============================================================
+12. SAMPLE PARLIAMENTARY QUERY
+============================================================
+
+Question:
+What was the coal production of CCL during FY 2023-24
+and how did it compare with FY 2022-23?
+
+Answer:
+CCL produced 76.42 million tonnes of coal during
+FY 2023-24 compared with 73.15 million tonnes during
+FY 2022-23. Production therefore increased by
+approximately 4.47% year-on-year.
+
+Source:
+CCL Production Performance Report, FY 2023-24
+Section: Executive Production Metrics

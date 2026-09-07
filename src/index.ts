@@ -9,9 +9,16 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 import routes from './routes';
+import './workers/document.worker';
+import './workers/report.worker';
 
 app.use(cors());
 app.use(express.json());
+
+app.use((req, res, next) => {
+  console.log(`[REQUEST] ${req.method} ${req.url}`);
+  next();
+});
 
 // Routes
 app.use('/api', routes);
