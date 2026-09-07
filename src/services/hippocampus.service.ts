@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const HIPPOCAMPUS_URL = process.env.HIPPOCAMPUS_URL || 'https://api.hippocampus.ai';
+const HIPPOCAMPUS_URL = process.env.HIPPOCAMPUS_HOST_URL;
 const API_KEY = process.env.HIPPOCAMPUS_API_KEY;
 
 const axiosInstance = axios.create({
@@ -15,7 +15,7 @@ const axiosInstance = axios.create({
 });
 
 export const createCollection = async (name: string) => {
-  const response = await axiosInstance.post('/v1/collections', {
+  const response = await axiosInstance.post('/collection', {
     name,
     settings: {
       denseModel: "text-embedding-3-large",
@@ -29,7 +29,7 @@ export const createCollection = async (name: string) => {
 };
 
 export const queryCollection = async (collectionId: string, query: string) => {
-  const response = await axiosInstance.post(`/v1/collections/${collectionId}/query`, {
+  const response = await axiosInstance.post(`/collection/${collectionId}/query`, {
     query
   });
   return response.data;
