@@ -46,8 +46,17 @@ app.get('/health', (req, res) => {
   });
 });
 
+import mongoose from 'mongoose';
+
 // Routes
-app.use('/api', routes);
+app.use('/api', (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Database is still connecting. If using MongoDB Atlas, make sure you whitelisted 0.0.0.0/0 in Atlas Network Access.'
+    });
+  }
+  next();
+}, routes);
 
 // Start listening immediately on 0.0.0.0 so Render detects open port without delay
 app.listen(Number(port), '0.0.0.0', () => {
