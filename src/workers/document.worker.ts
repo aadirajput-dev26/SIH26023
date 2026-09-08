@@ -1,21 +1,22 @@
 import { Worker } from 'bullmq';
-import IORedis from 'ioredis';
 import dotenv from 'dotenv';
 import DocumentModel from '../models/Document';
 import FolderModel from '../models/Folder';
-import { processImage, processPDF, callGtwyChatAgent, extractAllJsonObjects, extractGtwyContent } from '../services/gtwy.service';
-import { createUrlResource, createContentResource } from '../services/hippocampus.service';
-import { ensurePdfFormat } from '../services/converter.service';
+import { callGtwyChatAgent, extractAllJsonObjects, extractGtwyContent } from '../services/gtwy.service';
+import { createRedisConnection } from '../config/redis';
 
 dotenv.config();
 
-const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-});
+const connection = createRedisConnection('doc-worker');
 
-export const documentWorker = new Worker('document-processing-queue', async job => {
-  const { documentId, folderId, filePath, sourceUrl, fileType, originalName, description, gtwyResourceId } = job.data;
-  console.log(`[DocumentWorker] Processing job ${job.id} for document ${documentId}`);
+/**
+ * Self-contained document processing task that can be executed either by BullMQ
+ * or directly in-process when Redis is not available.
+ */
+export async function processDocumentTask(data: any, onProgress?: (progress: number) => void) {
+  const { documentId, folderId, filePath, sourceUrl, fileType, originalName, description, gtwyResourceId } = data;
+  console.log(`[DocumentTask] Processing document ${documentId} (${originalName})`);
+  if (onProgress) onProgress(10);
 
   try {
     await DocumentModel.findByIdAndUpdate(documentId, { status: 'processing' });
@@ -36,7 +37,7 @@ export const documentWorker = new Worker('document-processing-queue', async job 
           const result = await mammoth.extractRawText({ path: filePath });
           extractedText = result.value || '';
         } catch (mErr: any) {
-          console.warn('[DocumentWorker] Mammoth docx extraction fallback:', mErr.message);
+          console.warn('[DocumentTask] Mammoth docx extraction fallback:', mErr.message);
         }
       } else if (filePath.endsWith('.xlsx') || filePath.endsWith('.xls') || fileType?.includes('sheet') || fileType?.includes('excel')) {
         try {
@@ -51,7 +52,7 @@ export const documentWorker = new Worker('document-processing-queue', async job 
           }
           extractedText = rows.join('\n\n');
         } catch (xErr: any) {
-          console.warn('[DocumentWorker] XLSX extraction fallback:', xErr.message);
+          console.warn('[DocumentTask] XLSX extraction fallback:', xErr.message);
         }
       }
 
@@ -68,8 +69,10 @@ export const documentWorker = new Worker('document-processing-queue', async job 
       extractedText = `Source URL: ${sourceUrl}\nDocument: ${originalName}\nDescription: ${description || 'N/A'}`;
     }
 
+    if (onProgress) onProgress(30);
+
     // ── Step 2: SINGLE API CALL to GTWY Document Processing Agent ──
-    console.log(`[DocumentWorker] Executing GTWY agent extraction call for job ${job.id}...`);
+    console.log(`[DocumentTask] Calling GTWY agent extraction for document ${documentId}...`);
     const agentId = process.env.GTWY_DOCUMENT_PROCESSING_AGENT_ID || process.env.GTWY_DOC_AGENT_ID || '6a9e8ea6125b5dfba67d66e6';
     const threadId = `folder_${folderId}_doc_${documentId}`;
     
@@ -90,6 +93,8 @@ export const documentWorker = new Worker('document-processing-queue', async job 
       variables
     );
 
+    if (onProgress) onProgress(75);
+
     // Robust extraction of stringified JSON content returned by GTWY agent
     const rawContent = extractGtwyContent(gtwyResult);
     const cleanJson = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -98,7 +103,7 @@ export const documentWorker = new Worker('document-processing-queue', async job 
     try {
       analyticsData = JSON.parse(cleanJson);
     } catch {
-      // If direct parse fails (e.g. gateway error prepended), extract all JSON objects
+      // If direct parse fails, extract all JSON objects
       const objects = extractAllJsonObjects(rawContent);
       analyticsData = objects.find(obj => obj && (obj.topic || obj.wordCloudKeywords || obj.extractedMetrics || obj.summary)) || null;
     }
@@ -141,7 +146,7 @@ export const documentWorker = new Worker('document-processing-queue', async job 
       }
     }
 
-    // 2. Extract any other non-indexed custom metrics (e.g. 'Daily Dispatch': '45,000 Tonnes')
+    // 2. Extract any other non-indexed custom metrics
     for (const [k, v] of Object.entries(rawKeyMetrics)) {
       if (!processedMetricKeys.has(k) && !/^customMetricValue\d+$/i.test(k) && v !== undefined && v !== null) {
         customMetricsList.push({ name: k, value: v as any });
@@ -216,13 +221,18 @@ export const documentWorker = new Worker('document-processing-queue', async job 
       }
     });
 
-    console.log(`[DocumentWorker] Job ${job.id} completed successfully for document ${documentId}.`);
+    if (onProgress) onProgress(100);
+    console.log(`[DocumentTask] Document ${documentId} processed successfully.`);
     return { success: true, documentId };
   } catch (error: any) {
-    console.error(`[DocumentWorker] Job ${job.id} failed:`, error.message);
+    console.error(`[DocumentTask] Processing failed for doc ${documentId}:`, error.message);
     await DocumentModel.findByIdAndUpdate(documentId, { status: 'failed' });
     throw error;
   }
+}
+
+export const documentWorker = new Worker('document-processing-queue', async job => {
+  return await processDocumentTask(job.data, (p: number) => job.updateProgress(p));
 }, { 
   connection,
   lockDuration: 300000,
@@ -235,4 +245,8 @@ documentWorker.on('completed', job => {
 
 documentWorker.on('failed', (job, err) => {
   console.error(`[DocumentWorker] Job ${job?.id} failed: ${err.message}`);
+});
+
+documentWorker.on('error', (err) => {
+  // Gracefully handle BullMQ redis connection notice without crashing Node
 });

@@ -1,19 +1,22 @@
 import { Worker } from 'bullmq';
-import IORedis from 'ioredis';
 import dotenv from 'dotenv';
 import FolderModel from '../models/Folder';
 import DocumentModel from '../models/Document';
 import { callGtwyChatAgent, extractGtwyContent } from '../services/gtwy.service';
+import { createRedisConnection } from '../config/redis';
 
 dotenv.config();
 
-const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
-    maxRetriesPerRequest: null,
-});
+const connection = createRedisConnection('report-worker');
 
-export const reportWorker = new Worker('report-generation-queue', async job => {
-  const { folderId, title, prompt, instructions, reportType, audience, format, customVariables } = job.data;
-  console.log(`[ReportWorker] Starting report generation for folder ${folderId} with title: ${title}`);
+/**
+ * Self-contained report generation task that can be executed either by BullMQ
+ * or directly in-process when Redis is not available.
+ */
+export async function processReportTask(data: any, onProgress?: (progress: number) => void) {
+  const { folderId, title, prompt, instructions, reportType, audience, format, customVariables } = data;
+  console.log(`[ReportTask] Starting report generation for folder ${folderId} with title: ${title}`);
+  if (onProgress) onProgress(10);
 
   try {
     const folder = await FolderModel.findById(folderId);
@@ -53,8 +56,12 @@ export const reportWorker = new Worker('report-generation-queue', async job => {
       ...(customVariables || {})
     };
 
-    console.log(`[ReportWorker] Calling GTWY report agent (${agentId}) for folder: ${folder.name}...`);
+    if (onProgress) onProgress(30);
+
+    console.log(`[ReportTask] Calling GTWY report agent (${agentId}) for folder: ${folder.name}...`);
     const gtwyData = await callGtwyChatAgent(agentId, threadId, userPrompt, variables);
+
+    if (onProgress) onProgress(85);
 
     const rawContent = extractGtwyContent(gtwyData);
 
@@ -68,12 +75,17 @@ export const reportWorker = new Worker('report-generation-queue', async job => {
     folder.reports.push(generatedReport as any);
     await folder.save();
 
-    console.log(`[ReportWorker] Successfully generated and stored report for folder: ${folder.name}`);
+    if (onProgress) onProgress(100);
+    console.log(`[ReportTask] Successfully generated and stored report for folder: ${folder.name}`);
     return { success: true, report: generatedReport };
   } catch (error: any) {
-    console.error(`[ReportWorker] Report job failed:`, error.message);
+    console.error(`[ReportTask] Report task failed:`, error.message);
     throw error;
   }
+}
+
+export const reportWorker = new Worker('report-generation-queue', async job => {
+  return await processReportTask(job.data, (p: number) => job.updateProgress(p));
 }, { 
   connection,
   lockDuration: 300000,
@@ -86,4 +98,8 @@ reportWorker.on('completed', job => {
 
 reportWorker.on('failed', (job, err) => {
   console.error(`[ReportWorker] Report Job ${job?.id} failed: ${err.message}`);
+});
+
+reportWorker.on('error', (err) => {
+  // Gracefully handle BullMQ redis connection notice without crashing Node
 });

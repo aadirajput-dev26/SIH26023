@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { reportQueue } from '../queues';
+import { dispatchReportJob } from '../queues';
 import FolderModel from '../models/Folder';
 
 export const requestReportGeneration = async (req: Request, res: Response) => {
@@ -11,7 +11,7 @@ export const requestReportGeneration = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Folder not found' });
     }
 
-    const job = await reportQueue.add('generate-report', {
+    const job = await dispatchReportJob({
       folderId,
       title: title || `Analysis Report - ${folder.name}`,
       prompt: prompt || instructions || 'Generate a comprehensive, professional report based on the following folder context and documents.',
@@ -20,8 +20,6 @@ export const requestReportGeneration = async (req: Request, res: Response) => {
       audience: audience || 'Executive & Mine Leadership',
       format: format || 'Detailed Markdown Report',
       customVariables: customVariables || {}
-    }, {
-      jobId: `report_${folderId}_${Date.now()}`
     });
 
     res.status(202).json({

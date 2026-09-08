@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import FolderModel from '../models/Folder';
 import DocumentModel from '../models/Document';
-import { documentQueue } from '../queues';
+import { dispatchDocumentJob } from '../queues';
 import { createUrlResource } from '../services/hippocampus.service';
 
 // ─── Folder CRUD ──────────────────────────────────────────────────────────────
@@ -80,8 +80,8 @@ export const uploadDocument = async (req: Request, res: Response) => {
     });
     await doc.save();
 
-    // Dispatch to BullMQ for async processing (OCR + GTWY RAG + analytics)
-    const job = await documentQueue.add('process-document', {
+    // Dispatch for processing (BullMQ if Redis is live, otherwise resilient in-process)
+    const job = await dispatchDocumentJob({
       documentId: doc._id.toString(),
       folderId,
       filePath: file.path,
@@ -129,7 +129,7 @@ export const uploadDocumentByUrl = async (req: Request, res: Response) => {
     });
     await doc.save();
 
-    const job = await documentQueue.add('process-document', {
+    const job = await dispatchDocumentJob({
       documentId: doc._id.toString(),
       folderId,
       sourceUrl: url,
@@ -186,7 +186,7 @@ export const uploadDocumentContent = async (req: Request, res: Response) => {
     });
     await doc.save();
 
-    const job = await documentQueue.add('process-document', {
+    const job = await dispatchDocumentJob({
       documentId: doc._id.toString(),
       folderId,
       filePath,
