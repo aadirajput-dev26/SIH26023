@@ -4,7 +4,7 @@ import path from 'path';
 import FolderModel from '../models/Folder';
 import DocumentModel from '../models/Document';
 import { dispatchDocumentJob } from '../queues';
-import { createUrlResource } from '../services/hippocampus.service';
+import { queryPipeline } from '../services/rag_pipeline.service';
 
 // ─── Folder CRUD ──────────────────────────────────────────────────────────────
 
@@ -218,14 +218,9 @@ export const deleteDocument = async (req: Request, res: Response) => {
     const doc = await DocumentModel.findById(docId);
     if (!doc) return res.status(404).json({ error: 'Document not found' });
 
-    // Remove the GTWY RAG resource if it was indexed
+    // Remove the RAG resource if it was indexed (Implementation pending in RAG pipeline)
     if (doc.gtwyResourceId) {
-      try {
-        const { deleteResource } = await import('../services/hippocampus.service');
-        await deleteResource(doc.gtwyResourceId);
-      } catch (err: any) {
-        console.warn('[GTWY RAG] Failed to delete resource, continuing:', err.message);
-      }
+      console.warn('[RAG] Deletion not yet supported by pipeline API');
     }
 
     await DocumentModel.findByIdAndDelete(docId);
@@ -253,12 +248,7 @@ export const deleteFolder = async (req: Request, res: Response) => {
     const docs = await DocumentModel.find({ folderId: id });
     for (const doc of docs) {
       if (doc.gtwyResourceId) {
-        try {
-          const { deleteResource } = await import('../services/hippocampus.service');
-          await deleteResource(doc.gtwyResourceId);
-        } catch (err: any) {
-          console.warn('[GTWY RAG] Failed to delete resource, continuing:', err.message);
-        }
+        console.warn('[RAG] Deletion not yet supported by pipeline API');
       }
       await DocumentModel.findByIdAndDelete(doc._id);
     }
@@ -312,8 +302,10 @@ export const postChatMessage = async (req: Request, res: Response) => {
       folderAnalytics: JSON.stringify(folder.analyticsMetrics || {}, null, 2)
     };
 
-    const { streamGtwyChatAgent } = await import('../services/gtwy.service');
     const isStreaming = stream === true || req.headers.accept?.includes('text/event-stream') || req.query.stream === 'true';
+
+    // RAG Pipeline doesn't support streaming yet, simulate a fallback
+    const result = await queryPipeline(message);
 
     if (isStreaming) {
       res.setHeader('Content-Type', 'text/event-stream');
@@ -321,24 +313,14 @@ export const postChatMessage = async (req: Request, res: Response) => {
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders?.();
 
-      await streamGtwyChatAgent(
-        agentId,
-        threadId,
-        message,
-        variables,
-        (delta: string) => {
-          res.write(`data: ${JSON.stringify({ event: 'delta', content: delta })}\n\n`);
-        }
-      );
-
+      res.write(`data: ${JSON.stringify({ event: 'delta', content: result.answer })}\n\n`);
       res.write(`data: ${JSON.stringify({ event: 'done', threadId })}\n\n`);
       res.write('data: [DONE]\n\n');
       return res.end();
     } else {
-      const fullReply = await streamGtwyChatAgent(agentId, threadId, message, variables);
       return res.json({
         message: 'Chat completed',
-        reply: fullReply || "No content returned",
+        reply: result.answer || "No content returned",
         threadId,
       });
     }
@@ -360,15 +342,8 @@ export const getChatHistoryHandler = async (req: Request, res: Response) => {
   try {
     const { id, chatId } = req.params;
     
-    const agentId = process.env.GTWY_ASSISTANT_AGENT_ID;
-    if (!agentId) return res.status(500).json({ error: 'GTWY_ASSISTANT_AGENT_ID is not configured' });
-
-    const threadId = `folder_${id}_chat_${chatId}`;
-
-    const { getChatHistory } = await import('../services/gtwy.service');
-    const history = await getChatHistory(agentId, threadId);
-
-    res.json(history);
+    // The RAG Pipeline doesn't have an explicit chat history endpoint yet.
+    res.json([]);
   } catch (error: any) {
     console.error('History error:', error.message);
     res.status(500).json({ error: error.message });

@@ -4,6 +4,7 @@ import DocumentModel from '../models/Document';
 import FolderModel from '../models/Folder';
 import { callGtwyChatAgent, extractAllJsonObjects, extractGtwyContent } from '../services/gtwy.service';
 import { createRedisConnection } from '../config/redis';
+import { ingestDocument, ingestUrl, checkDocumentStatus, queryPipeline } from '../services/rag_pipeline.service';
 
 dotenv.config();
 
@@ -23,77 +24,43 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
 
     let resourceId = gtwyResourceId;
 
-    // ── Step 1: Read/extract text locally ──
-    let extractedText = '';
+    // ── Step 1: Ingest into RAG Pipeline ──
+    let ingestResult;
     if (filePath) {
-      if (fileType === 'text/plain' || fileType === 'text/markdown' || filePath.endsWith('.txt') || filePath.endsWith('.md')) {
-        try {
-          const fs = await import('fs');
-          extractedText = await fs.promises.readFile(filePath, 'utf-8');
-        } catch (e) {}
-      } else if (filePath.endsWith('.docx') || fileType?.includes('word')) {
-        try {
-          const mammoth = await import('mammoth');
-          const result = await mammoth.extractRawText({ path: filePath });
-          extractedText = result.value || '';
-        } catch (mErr: any) {
-          console.warn('[DocumentTask] Mammoth docx extraction fallback:', mErr.message);
-        }
-      } else if (filePath.endsWith('.xlsx') || filePath.endsWith('.xls') || fileType?.includes('sheet') || fileType?.includes('excel')) {
-        try {
-          const XLSX = await import('xlsx');
-          const workbook = XLSX.readFile(filePath);
-          const sheetNames = workbook.SheetNames;
-          const rows: string[] = [];
-          for (const sheetName of sheetNames) {
-            const sheet = workbook.Sheets[sheetName];
-            const csv = XLSX.utils.sheet_to_csv(sheet);
-            rows.push(`--- Sheet: ${sheetName} ---\n${csv}`);
-          }
-          extractedText = rows.join('\n\n');
-        } catch (xErr: any) {
-          console.warn('[DocumentTask] XLSX extraction fallback:', xErr.message);
-        }
-      }
-
-      // If still empty, read raw text or metadata
-      if (!extractedText) {
-        try {
-          const fs = await import('fs');
-          extractedText = await fs.promises.readFile(filePath, 'utf-8');
-        } catch (readErr: any) {
-          extractedText = `Document: ${originalName}\nType: ${fileType}\nDescription: ${description || 'N/A'}`;
-        }
-      }
+      ingestResult = await ingestDocument(filePath, originalName || 'document', fileType || 'application/pdf');
     } else if (sourceUrl) {
-      extractedText = `Source URL: ${sourceUrl}\nDocument: ${originalName}\nDescription: ${description || 'N/A'}`;
+      ingestResult = await ingestUrl(sourceUrl);
+    } else {
+      throw new Error("Neither filePath nor sourceUrl provided");
     }
-
-    if (onProgress) onProgress(30);
-
-    // ── Step 2: SINGLE API CALL to GTWY Document Processing Agent ──
-    console.log(`[DocumentTask] Calling GTWY agent extraction for document ${documentId}...`);
-    const agentId = process.env.GTWY_DOCUMENT_PROCESSING_AGENT_ID || process.env.GTWY_DOC_AGENT_ID || '6a9e8ea6125b5dfba67d66e6';
-    const threadId = `folder_${folderId}_doc_${documentId}`;
     
-    const folder = await FolderModel.findById(folderId);
-    const variables = {
-      folderName: folder?.name || '',
-      folderDescription: folder?.description || '',
-      documentText: extractedText ? extractedText.substring(0, 35000) : (description || originalName || ''),
-      fileName: originalName || 'uploaded_document',
-      fileType: fileType || 'application/pdf',
-      folderAnalytics: JSON.stringify(folder?.analyticsMetrics || { totalDocuments: 1, lastProcessed: new Date().toISOString() })
-    };
+    const ragDocumentId = ingestResult.document_id;
+    if (onProgress) onProgress(40);
 
-    const gtwyResult = await callGtwyChatAgent(
-      agentId,
-      threadId,
-      "Extract the analytics",
-      variables
-    );
+    // ── Step 2: Poll RAG Pipeline until processed ──
+    let isProcessed = false;
+    for (let i = 0; i < 60; i++) { // Wait up to 5 minutes
+      const statusRes = await checkDocumentStatus(ragDocumentId);
+      if (statusRes.overall_status === 'COMPLETED') {
+        isProcessed = true;
+        break;
+      }
+      if (statusRes.overall_status === 'FAILED') {
+        throw new Error("RAG Pipeline processing failed.");
+      }
+      await new Promise(r => setTimeout(r, 5000));
+    }
+    if (!isProcessed) throw new Error("RAG Pipeline processing timeout");
 
     if (onProgress) onProgress(75);
+
+    // ── Step 3: Extract Analytics via RAG Query Pipeline ──
+    console.log(`[DocumentTask] Extracting analytics via RAG pipeline for document ${documentId}...`);
+    const prompt = "Extract the key analytics, metrics, and topics from this document and return them in a strict JSON format including 'topic', 'summary', 'wordCloudKeywords' (array of strings), and 'extractedMetrics' (object of key-value pairs).";
+    const queryResult = await queryPipeline(prompt, [ragDocumentId]);
+    const gtwyResult = queryResult.answer;
+
+    if (onProgress) onProgress(80);
 
     // Robust extraction of stringified JSON content returned by GTWY agent
     const rawContent = extractGtwyContent(gtwyResult);
