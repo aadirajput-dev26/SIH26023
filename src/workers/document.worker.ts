@@ -1,6 +1,6 @@
 import { Worker } from 'bullmq';
 import dotenv from 'dotenv';
-import DocumentModel from '../models/Document';
+import mongoose from 'mongoose';
 import FolderModel from '../models/Folder';
 import { createRedisConnection } from '../config/redis';
 import { ingestDocument, ingestUrl, waitForProcessing, queryPipeline } from '../services/rag_pipeline.service';
@@ -11,15 +11,33 @@ dotenv.config();
 const connection = createRedisConnection('doc-worker');
 
 /**
- * Self-contained document processing task that can be executed either by BullMQ
- * or directly in-process when Redis is not available.
+ * Update an embedded document's status within its parent Folder.
+ * Uses positional $ operator for the matching subdoc.
+ */
+async function updateEmbeddedDoc(folderId: string, documentId: string, update: Record<string, any>) {
+  const setFields: Record<string, any> = {};
+  for (const [key, value] of Object.entries(update)) {
+    setFields[`documents.$.${key}`] = value;
+  }
+  await FolderModel.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(folderId),
+      'documents._id': new mongoose.Types.ObjectId(documentId),
+    },
+    { $set: setFields },
+  );
+}
+
+/**
+ * Self-contained document processing task.
  *
  * Flow:
- *   1. Ingest file/URL → RAG Pipeline (/api/v1/documents/ingest or /ingest-url)
+ *   1. Ingest file/URL → RAG Pipeline
  *   2. Poll /status until COMPLETED
- *   3. Query the pipeline for structured analytics JSON
- *   4. Parse + normalize analytics, save to MongoDB
- *   5. Aggregate folder-level metrics
+ *   3. Query for structured analytics JSON
+ *   4. Parse + normalize analytics
+ *   5. Update embedded document in Folder.documents[]
+ *   6. Recalculate folder aggregated analytics
  */
 export async function processDocumentTask(data: any, onProgress?: (progress: number) => void) {
   const { documentId, folderId, filePath, sourceUrl, fileType, originalName, description } = data;
@@ -27,7 +45,7 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
   if (onProgress) onProgress(10);
 
   try {
-    await DocumentModel.findByIdAndUpdate(documentId, { status: 'processing' });
+    await updateEmbeddedDoc(folderId, documentId, { status: 'processing' });
 
     // ── Step 1: Ingest into RAG Pipeline ──────────────────────────────────────
     let ingestResult: { document_id: string; [key: string]: any };
@@ -45,11 +63,11 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
     const ragDocumentId = ingestResult.document_id;
     console.log(`[DocumentTask] RAG doc created: ${ragDocumentId}`);
 
-    // Persist the RAG document ID immediately so we can track/delete later
-    await DocumentModel.findByIdAndUpdate(documentId, { ragDocumentId });
+    // Persist the RAG document ID immediately
+    await updateEmbeddedDoc(folderId, documentId, { ragDocumentId });
     if (onProgress) onProgress(35);
 
-    // ── Step 2: Poll until RAG Pipeline finishes processing ───────────────────
+    // ── Step 2: Poll until RAG Pipeline finishes ───────────────────────────────
     console.log(`[DocumentTask] Waiting for RAG pipeline to process doc ${ragDocumentId}...`);
     await waitForProcessing(ragDocumentId, 300_000, 5_000);
     if (onProgress) onProgress(70);
@@ -128,7 +146,6 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
       }
     }
 
-    // Also check top-level extractedMetrics for paired customMetricName/Value keys
     const topMetrics = analyticsData.extractedMetrics;
     const topNameKeys = Object.keys(topMetrics).filter(k => /^customMetricName\d+$/i.test(k));
     topNameKeys.sort((a, b) => parseInt(a.replace(/\D/g, '')) - parseInt(b.replace(/\D/g, '')));
@@ -144,7 +161,6 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
       }
     }
 
-    // Remaining non-indexed custom metric entries from rawKeyMetrics
     for (const [k, v] of Object.entries(rawKeyMetrics)) {
       if (!processedMetricKeys.has(k) && !/^customMetricValue\d+$/i.test(k) && v !== undefined && v !== null) {
         customMetricsList.push({ name: k, value: v as any });
@@ -153,14 +169,17 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
 
     analyticsData.extractedMetrics.customMetricsList = customMetricsList;
 
-    // ── Step 5: Save document analytics ──────────────────────────────────────
-    await DocumentModel.findByIdAndUpdate(documentId, {
+    // ── Step 5: Update embedded document analytics ────────────────────────────
+    await updateEmbeddedDoc(folderId, documentId, {
       status: 'completed',
       analytics: analyticsData,
     });
 
     // ── Step 6: Recalculate folder aggregated analytics ───────────────────────
-    const allFolderDocs = await DocumentModel.find({ folderId, status: 'completed' });
+    const updatedFolder = await FolderModel.findById(folderId).lean();
+    if (!updatedFolder) throw new Error('Folder not found during analytics aggregation');
+
+    const completedDocs = (updatedFolder.documents || []).filter(d => d.status === 'completed');
 
     let totalCoal = 0;
     let totalOBR = 0;
@@ -169,7 +188,7 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
     const allAggregatedCustomMetrics: Array<{ name: string; value: string | number; docTitle?: string }> = [];
     const docsDataSummary: any[] = [];
 
-    for (const doc of allFolderDocs) {
+    for (const doc of completedDocs) {
       const a = doc.analytics || {};
       const m = a.extractedMetrics || {};
 
@@ -223,7 +242,7 @@ export async function processDocumentTask(data: any, onProgress?: (progress: num
     return { success: true, documentId, ragDocumentId };
   } catch (error: any) {
     console.error(`[DocumentTask] Processing failed for doc ${documentId}:`, error.message);
-    await DocumentModel.findByIdAndUpdate(documentId, { status: 'failed' });
+    await updateEmbeddedDoc(folderId, documentId, { status: 'failed' });
     throw error;
   }
 }

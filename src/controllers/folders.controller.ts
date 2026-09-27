@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import mongoose from 'mongoose';
 import FolderModel from '../models/Folder';
-import DocumentModel from '../models/Document';
 import { dispatchDocumentJob } from '../queues';
 import { queryPipeline } from '../services/rag_pipeline.service';
 
@@ -11,12 +11,16 @@ import { queryPipeline } from '../services/rag_pipeline.service';
 export const createFolder = async (req: Request, res: Response) => {
   console.log('>>> createFolder called with body:', req.body);
   try {
-    const { name, description } = req.body;
+    const { name, description, departmentId, projectIds } = req.body;
     if (!name) return res.status(400).json({ error: 'Folder name is required' });
 
-    // No longer creating a Hippocampus collection per folder.
-    // All resources share one GTWY RAG workspace; ownership is via Document.folderId.
-    const folder = new FolderModel({ name, description });
+    const folder = new FolderModel({
+      name,
+      description,
+      departmentId: departmentId || undefined,
+      projectIds: projectIds || [],
+      ownerId: req.user?.id || undefined,
+    });
     await folder.save();
 
     res.status(201).json(folder);
@@ -27,12 +31,30 @@ export const createFolder = async (req: Request, res: Response) => {
 
 export const getFolders = async (req: Request, res: Response) => {
   try {
-    const folders = await FolderModel.find().lean().sort({ createdAt: -1 });
-    const foldersWithDocs = await Promise.all(folders.map(async (folder) => {
-      const documents = await DocumentModel.find({ folderId: folder._id }).lean();
-      return { ...folder, documents };
+    const filter: any = {};
+
+    // Scope filtering for non-super_admin users
+    if (req.user && req.user.role !== 'super_admin') {
+      if (req.user.role === 'dept_admin' && req.user.departmentScope.length > 0) {
+        filter.departmentId = { $in: req.user.departmentScope };
+      } else if (req.user.projectScope.length > 0) {
+        filter.projectIds = { $in: req.user.projectScope };
+      }
+    }
+
+    const folders = await FolderModel.find(filter)
+      .lean()
+      .sort({ createdAt: -1 });
+
+    // Shape for frontend: expose documentCount from embedded array
+    const shaped = folders.map((folder) => ({
+      ...folder,
+      documentCount: (folder.documents || []).length,
+      reportCount: (folder.reports || []).length,
+      documents: folder.documents || [],
     }));
-    res.json(foldersWithDocs);
+
+    res.json(shaped);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -40,12 +62,15 @@ export const getFolders = async (req: Request, res: Response) => {
 
 export const getFolderById = async (req: Request, res: Response) => {
   try {
-    const folder = await FolderModel.findById(req.params.id);
+    const folder = await FolderModel.findById(req.params.id).lean();
     if (!folder) return res.status(404).json({ error: 'Folder not found' });
 
-    const documents = await DocumentModel.find({ folderId: folder._id }).sort({ createdAt: -1 });
-    // Return folder + documents merged, convenient for the frontend
-    res.json({ ...folder.toObject(), documents });
+    res.json({
+      ...folder,
+      documents: folder.documents || [],
+      documentCount: (folder.documents || []).length,
+      reportCount: (folder.reports || []).length,
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -55,8 +80,8 @@ export const getFolderById = async (req: Request, res: Response) => {
 
 /**
  * POST /api/folders/:id/upload
- * Accepts a multipart form-data file. The BullMQ worker will then call
- * the GTWY RAG API (via the file's temporary path or a stored URL) asynchronously.
+ * Accepts multipart/form-data. Embeds document metadata in Folder.documents[].
+ * The BullMQ worker ingests the file into the RAG Pipeline and updates ragDocumentId.
  */
 export const uploadDocument = async (req: Request, res: Response) => {
   try {
@@ -69,30 +94,35 @@ export const uploadDocument = async (req: Request, res: Response) => {
     const folder = await FolderModel.findById(folderId);
     if (!folder) return res.status(404).json({ error: 'Folder not found' });
 
-    const doc = new DocumentModel({
-      folderId,
+    // Create a new embedded document entry
+    const docId = new mongoose.Types.ObjectId();
+    const newDoc = {
+      _id: docId,
       originalName: file.originalname,
       title: title || file.originalname,
       description: description || undefined,
       mimetype: file.mimetype,
       size: file.size,
-      status: 'pending',
-    });
-    await doc.save();
+      status: 'pending' as const,
+    };
 
-    // Dispatch for processing (BullMQ if Redis is live, otherwise resilient in-process)
+    await FolderModel.findByIdAndUpdate(folderId, {
+      $push: { documents: newDoc },
+    });
+
+    // Dispatch for RAG pipeline processing
     const job = await dispatchDocumentJob({
-      documentId: doc._id.toString(),
+      documentId: docId.toString(),
       folderId,
       filePath: file.path,
       fileType: file.mimetype,
-      originalName: doc.title || file.originalname,
-      description: doc.description,
+      originalName: newDoc.title || file.originalname,
+      description: newDoc.description,
     });
 
     res.status(202).json({
       message: 'Document uploaded and queued for processing',
-      documentId: doc._id,
+      documentId: docId,
       jobId: job.id,
     });
   } catch (error: any) {
@@ -102,11 +132,6 @@ export const uploadDocument = async (req: Request, res: Response) => {
 
 // ─── Document Upload (URL / Link) ─────────────────────────────────────────────
 
-/**
- * POST /api/folders/:id/upload-url
- * Body: { url: string, title?: string, description?: string }
- * Directly creates a GTWY RAG resource from a public URL (no file transfer needed).
- */
 export const uploadDocumentByUrl = async (req: Request, res: Response) => {
   try {
     const folderId = req.params.id;
@@ -117,20 +142,24 @@ export const uploadDocumentByUrl = async (req: Request, res: Response) => {
     const folder = await FolderModel.findById(folderId);
     if (!folder) return res.status(404).json({ error: 'Folder not found' });
 
-    const doc = new DocumentModel({
-      folderId,
+    const docId = new mongoose.Types.ObjectId();
+    const newDoc = {
+      _id: docId,
       originalName: title || url,
       title: title || url,
       description: description || undefined,
       mimetype: 'application/pdf',
       size: 0,
       sourceUrl: url,
-      status: 'pending',
+      status: 'pending' as const,
+    };
+
+    await FolderModel.findByIdAndUpdate(folderId, {
+      $push: { documents: newDoc },
     });
-    await doc.save();
 
     const job = await dispatchDocumentJob({
-      documentId: doc._id.toString(),
+      documentId: docId.toString(),
       folderId,
       sourceUrl: url,
       fileType: 'application/pdf',
@@ -140,7 +169,7 @@ export const uploadDocumentByUrl = async (req: Request, res: Response) => {
 
     res.status(202).json({
       message: 'URL document registered and queued for processing',
-      documentId: doc._id,
+      documentId: docId,
       jobId: job.id,
     });
   } catch (error: any) {
@@ -150,11 +179,6 @@ export const uploadDocumentByUrl = async (req: Request, res: Response) => {
 
 // ─── Document Upload (Raw Text Content) ───────────────────────────────────────
 
-/**
- * POST /api/folders/:id/upload-content
- * Body: { title: string, content: string, description?: string }
- * Creates a text document entry and queues conversion to PDF + RAG processing.
- */
 export const uploadDocumentContent = async (req: Request, res: Response) => {
   try {
     const folderId = req.params.id;
@@ -175,19 +199,23 @@ export const uploadDocumentContent = async (req: Request, res: Response) => {
     const filePath = path.join('uploads', filename);
     await fs.promises.writeFile(filePath, content, 'utf-8');
 
-    const doc = new DocumentModel({
-      folderId,
+    const docId = new mongoose.Types.ObjectId();
+    const newDoc = {
+      _id: docId,
       originalName: title,
       title,
       description: description || undefined,
       mimetype: 'text/plain',
       size: Buffer.byteLength(content),
-      status: 'pending',
+      status: 'pending' as const,
+    };
+
+    await FolderModel.findByIdAndUpdate(folderId, {
+      $push: { documents: newDoc },
     });
-    await doc.save();
 
     const job = await dispatchDocumentJob({
-      documentId: doc._id.toString(),
+      documentId: docId.toString(),
       folderId,
       filePath,
       fileType: 'text/plain',
@@ -197,7 +225,7 @@ export const uploadDocumentContent = async (req: Request, res: Response) => {
 
     res.status(202).json({
       message: 'Text content document registered and queued for processing',
-      documentId: doc._id,
+      documentId: docId,
       jobId: job.id,
     });
   } catch (error: any) {
@@ -209,21 +237,25 @@ export const uploadDocumentContent = async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/folders/:id/documents/:docId
- * Deletes the document from MongoDB and removes the corresponding GTWY RAG resource.
+ * Removes the embedded document from Folder.documents[].
  */
 export const deleteDocument = async (req: Request, res: Response) => {
   try {
-    const { docId } = req.params;
+    const { id: folderId, docId } = req.params;
 
-    const doc = await DocumentModel.findById(docId);
+    const folder = await FolderModel.findById(folderId);
+    if (!folder) return res.status(404).json({ error: 'Folder not found' });
+
+    const doc = folder.documents.find((d) => d._id.toString() === docId);
     if (!doc) return res.status(404).json({ error: 'Document not found' });
 
-    // Remove the RAG pipeline resource if it was indexed
-    if ((doc as any).ragDocumentId) {
-      console.warn('[RAG] Document deletion from vector store not yet supported by pipeline API. MongoDB record will be deleted.');
+    if (doc.ragDocumentId) {
+      console.warn('[RAG] Document deletion from vector store not yet supported by pipeline API. Removing from Folder only.');
     }
 
-    await DocumentModel.findByIdAndDelete(docId);
+    await FolderModel.findByIdAndUpdate(folderId, {
+      $pull: { documents: { _id: new mongoose.Types.ObjectId(docId as string) } },
+    });
 
     res.json({ message: 'Document deleted successfully', documentId: docId });
   } catch (error: any) {
@@ -233,10 +265,6 @@ export const deleteDocument = async (req: Request, res: Response) => {
 
 // ─── Delete Folder ────────────────────────────────────────────────────────────
 
-/**
- * DELETE /api/folders/:id
- * Deletes the folder, all its documents, and reports.
- */
 export const deleteFolder = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -244,16 +272,13 @@ export const deleteFolder = async (req: Request, res: Response) => {
     const folder = await FolderModel.findById(id);
     if (!folder) return res.status(404).json({ error: 'Folder not found' });
 
-    // Find and delete all documents (and their GTWY resources)
-    const docs = await DocumentModel.find({ folderId: id });
-    for (const doc of docs) {
-      if ((doc as any).ragDocumentId) {
-        console.warn('[RAG] Document deletion from vector store not yet supported. Removing from MongoDB only.');
+    // Log RAG cleanup notice for any indexed documents
+    for (const doc of folder.documents) {
+      if (doc.ragDocumentId) {
+        console.warn('[RAG] Document deletion from vector store not yet supported. Removing from Folder only.');
       }
-      await DocumentModel.findByIdAndDelete(doc._id);
     }
 
-    // Reports are embedded in FolderModel, so deleting the folder deletes reports automatically.
     await FolderModel.findByIdAndDelete(id);
 
     res.json({ message: 'Folder deleted successfully', folderId: id });
@@ -264,10 +289,6 @@ export const deleteFolder = async (req: Request, res: Response) => {
 
 // ─── Chat Assistant ───────────────────────────────────────────────────────────
 
-/**
- * POST /api/folders/:id/chats/:chatId
- * Sends a message to the GTWY Assistant Agent using the folder context.
- */
 export const postChatMessage = async (req: Request, res: Response) => {
   try {
     const { id, chatId } = req.params;
@@ -275,32 +296,21 @@ export const postChatMessage = async (req: Request, res: Response) => {
 
     if (!message) return res.status(400).json({ error: 'Message is required' });
 
-    const folder = await FolderModel.findById(id);
+    const folder = await FolderModel.findById(id).lean();
     if (!folder) return res.status(404).json({ error: 'Folder not found' });
 
-    // Fetch all documents for this folder to pass into variables
-    const docs = await DocumentModel.find({ folderId: id });
-    const documentsSummary = docs.map(doc => ({
-      name: doc.originalName,
-      title: doc.title || doc.originalName,
-      description: (doc as any).description || doc.originalName,
-      mimetype: doc.mimetype,
-      status: doc.status,
-      topic: doc.analytics?.topic,
-      summary: doc.analytics?.summary,
-      extractedMetrics: doc.analytics?.extractedMetrics,
-    }));
-
-    // Collect all RAG pipeline document IDs for this folder to scope the query
-    const ragDocumentIds = docs
-      .map((d) => (d as any).ragDocumentId)
+    // Collect RAG pipeline document IDs from embedded documents
+    const ragDocumentIds = (folder.documents || [])
+      .map((d) => d.ragDocumentId)
       .filter(Boolean) as string[];
 
-    const threadId = `folder_${id}_chat_${chatId}`; // kept for the response payload
+    const threadId = `folder_${id}_chat_${chatId}`;
 
-    const isStreaming = stream === true || req.headers.accept?.includes('text/event-stream') || req.query.stream === 'true';
+    const isStreaming =
+      stream === true ||
+      req.headers.accept?.includes('text/event-stream') ||
+      req.query.stream === 'true';
 
-    // Query RAG pipeline scoped to this folder's indexed documents
     const result = await queryPipeline(message, ragDocumentIds.length > 0 ? ragDocumentIds : undefined);
 
     if (isStreaming) {
@@ -316,7 +326,7 @@ export const postChatMessage = async (req: Request, res: Response) => {
     } else {
       return res.json({
         message: 'Chat completed',
-        reply: result.answer || "No content returned",
+        reply: result.answer || 'No content returned',
         threadId,
       });
     }
@@ -330,15 +340,8 @@ export const postChatMessage = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * GET /api/folders/:id/chats/:chatId/history
- * Fetches the GTWY Assistant Agent chat history for the given thread.
- */
 export const getChatHistoryHandler = async (req: Request, res: Response) => {
   try {
-    const { id, chatId } = req.params;
-    
-    // The RAG Pipeline doesn't have an explicit chat history endpoint yet.
     res.json([]);
   } catch (error: any) {
     console.error('History error:', error.message);
