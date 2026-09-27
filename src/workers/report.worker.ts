@@ -2,16 +2,21 @@ import { Worker } from 'bullmq';
 import dotenv from 'dotenv';
 import FolderModel from '../models/Folder';
 import DocumentModel from '../models/Document';
-import { callGtwyChatAgent, extractGtwyContent } from '../services/gtwy.service';
 import { createRedisConnection } from '../config/redis';
+import { queryPipeline } from '../services/rag_pipeline.service';
 
 dotenv.config();
 
 const connection = createRedisConnection('report-worker');
 
 /**
- * Self-contained report generation task that can be executed either by BullMQ
- * or directly in-process when Redis is not available.
+ * Self-contained report generation task.
+ *
+ * Flow:
+ *   1. Load folder + all its documents from MongoDB
+ *   2. Collect all ragDocumentIds from completed docs
+ *   3. Query the RAG pipeline with a rich report prompt scoped to those docs
+ *   4. Store the generated report in the Folder document
  */
 export async function processReportTask(data: any, onProgress?: (progress: number) => void) {
   const { folderId, title, prompt, instructions, reportType, audience, format, customVariables } = data;
@@ -22,11 +27,13 @@ export async function processReportTask(data: any, onProgress?: (progress: numbe
     const folder = await FolderModel.findById(folderId);
     if (!folder) throw new Error('Folder not found');
 
-    // Fetch all documents for this folder to pass into variables
-    const docs = await DocumentModel.find({ folderId: folder._id });
-    
-    // Create rich summary of documents
-    const documentsSummary = docs.map(doc => ({
+    // ── Step 1: Fetch documents + collect RAG doc IDs ─────────────────────────
+    const docs = await DocumentModel.find({ folderId: folder._id, status: 'completed' });
+    const ragDocumentIds = docs
+      .map((d) => (d as any).ragDocumentId)
+      .filter(Boolean) as string[];
+
+    const documentsSummary = docs.map((doc) => ({
       name: doc.originalName,
       title: doc.title || doc.originalName,
       description: (doc as any).description || doc.originalName,
@@ -37,38 +44,56 @@ export async function processReportTask(data: any, onProgress?: (progress: numbe
       extractedMetrics: doc.analytics?.extractedMetrics,
     }));
 
-    const agentId = process.env.GTWY_REPORT_GENERATION_AGENT_ID || '6a9f17ef0869a6b2a2333e34';
-    const threadId = `folder_${folder._id}_report_${Date.now()}`;
-    const userPrompt = prompt || instructions || 'Generate a comprehensive, detailed, professional report based on the following folder context and documents.';
+    if (onProgress) onProgress(25);
 
-    const variables = {
-      folderName: folder.name,
-      folderDescription: folder.description || '',
-      reportTitle: title || `Report for ${folder.name}`,
-      userInstructions: instructions || prompt || '',
-      instructions: instructions || prompt || '',
-      prompt: prompt || instructions || '',
-      reportType: reportType || 'Comprehensive Operational Report',
-      audience: audience || 'Executive & Mine Leadership',
-      format: format || 'Detailed Markdown Report',
-      documentsList: JSON.stringify(documentsSummary, null, 2),
-      folderAnalytics: JSON.stringify(folder.analyticsMetrics || {}, null, 2),
-      ...(customVariables || {})
-    };
+    // ── Step 2: Build a rich report prompt ───────────────────────────────────
+    const reportTitle = title || `Analysis Report - ${folder.name}`;
+    const userInstructions = instructions || prompt || 'Generate a comprehensive, professional report.';
 
-    if (onProgress) onProgress(30);
+    const fullPrompt = [
+      `You are an expert report writer for the coal mining domain.`,
+      `Generate a complete, detailed ${reportType || 'Comprehensive Operational Report'} in ${format || 'Markdown'} format.`,
+      `Report Title: ${reportTitle}`,
+      `Target Audience: ${audience || 'Executive & Mine Leadership'}`,
+      ``,
+      `User Instructions: ${userInstructions}`,
+      ``,
+      `Folder: ${folder.name}`,
+      folder.description ? `Folder Description: ${folder.description}` : '',
+      ``,
+      `Folder Analytics Summary:`,
+      JSON.stringify(folder.analyticsMetrics || {}, null, 2),
+      ``,
+      `Documents in this folder (${docs.length} total):`,
+      JSON.stringify(documentsSummary, null, 2),
+      ``,
+      `Using the above context and the indexed document content, produce a thorough professional report.`,
+      `Include executive summary, key findings, metrics analysis, recommendations, and conclusion.`,
+      ...(customVariables ? [`Additional context: ${JSON.stringify(customVariables)}`] : []),
+    ]
+      .filter(Boolean)
+      .join('\n');
 
-    console.log(`[ReportTask] Calling GTWY report agent (${agentId}) for folder: ${folder.name}...`);
-    const gtwyData = await callGtwyChatAgent(agentId, threadId, userPrompt, variables);
+    if (onProgress) onProgress(40);
+
+    // ── Step 3: Query RAG pipeline (scoped to folder docs if available) ───────
+    console.log(
+      `[ReportTask] Calling RAG pipeline for report generation. Scoped docs: ${ragDocumentIds.length}`,
+    );
+    const result = await queryPipeline(
+      fullPrompt,
+      ragDocumentIds.length > 0 ? ragDocumentIds : undefined,
+    );
 
     if (onProgress) onProgress(85);
 
-    const rawContent = extractGtwyContent(gtwyData);
+    const reportContent = result.answer || 'Report generated with no content.';
 
+    // ── Step 4: Save report to Folder ─────────────────────────────────────────
     const generatedReport = {
-      title: title || `Analysis Report - ${folder.name}`,
-      content: rawContent || 'Report generated with no content.',
-      createdAt: new Date()
+      title: reportTitle,
+      content: reportContent,
+      createdAt: new Date(),
     };
 
     folder.reports = folder.reports || [];
@@ -76,23 +101,21 @@ export async function processReportTask(data: any, onProgress?: (progress: numbe
     await folder.save();
 
     if (onProgress) onProgress(100);
-    console.log(`[ReportTask] Successfully generated and stored report for folder: ${folder.name}`);
+    console.log(`[ReportTask] Successfully generated report for folder: ${folder.name}`);
     return { success: true, report: generatedReport };
   } catch (error: any) {
-    console.error(`[ReportTask] Report task failed:`, error.message);
+    console.error('[ReportTask] Report task failed:', error.message);
     throw error;
   }
 }
 
-export const reportWorker = new Worker('report-generation-queue', async job => {
-  return await processReportTask(job.data, (p: number) => job.updateProgress(p));
-}, { 
-  connection,
-  lockDuration: 300000,
-  stalledInterval: 300000
-});
+export const reportWorker = new Worker(
+  'report-generation-queue',
+  async (job) => processReportTask(job.data, (p: number) => job.updateProgress(p)),
+  { connection, lockDuration: 600000, stalledInterval: 600000 },
+);
 
-reportWorker.on('completed', job => {
+reportWorker.on('completed', (job) => {
   console.log(`[ReportWorker] Report Job ${job.id} has completed!`);
 });
 
@@ -100,6 +123,6 @@ reportWorker.on('failed', (job, err) => {
   console.error(`[ReportWorker] Report Job ${job?.id} failed: ${err.message}`);
 });
 
-reportWorker.on('error', (err) => {
-  // Gracefully handle BullMQ redis connection notice without crashing Node
+reportWorker.on('error', () => {
+  // Suppress BullMQ redis connection noise
 });

@@ -218,9 +218,9 @@ export const deleteDocument = async (req: Request, res: Response) => {
     const doc = await DocumentModel.findById(docId);
     if (!doc) return res.status(404).json({ error: 'Document not found' });
 
-    // Remove the RAG resource if it was indexed (Implementation pending in RAG pipeline)
-    if (doc.gtwyResourceId) {
-      console.warn('[RAG] Deletion not yet supported by pipeline API');
+    // Remove the RAG pipeline resource if it was indexed
+    if ((doc as any).ragDocumentId) {
+      console.warn('[RAG] Document deletion from vector store not yet supported by pipeline API. MongoDB record will be deleted.');
     }
 
     await DocumentModel.findByIdAndDelete(docId);
@@ -247,8 +247,8 @@ export const deleteFolder = async (req: Request, res: Response) => {
     // Find and delete all documents (and their GTWY resources)
     const docs = await DocumentModel.find({ folderId: id });
     for (const doc of docs) {
-      if (doc.gtwyResourceId) {
-        console.warn('[RAG] Deletion not yet supported by pipeline API');
+      if ((doc as any).ragDocumentId) {
+        console.warn('[RAG] Document deletion from vector store not yet supported. Removing from MongoDB only.');
       }
       await DocumentModel.findByIdAndDelete(doc._id);
     }
@@ -291,21 +291,17 @@ export const postChatMessage = async (req: Request, res: Response) => {
       extractedMetrics: doc.analytics?.extractedMetrics,
     }));
 
-    const agentId = process.env.GTWY_ASSISTANT_AGENT_ID;
-    if (!agentId) return res.status(500).json({ error: 'GTWY_ASSISTANT_AGENT_ID is not configured' });
+    // Collect all RAG pipeline document IDs for this folder to scope the query
+    const ragDocumentIds = docs
+      .map((d) => (d as any).ragDocumentId)
+      .filter(Boolean) as string[];
 
-    const threadId = `folder_${id}_chat_${chatId}`;
-    const variables = {
-      folderName: folder.name,
-      folderDescription: folder.description || "",
-      documentsList: JSON.stringify(documentsSummary, null, 2),
-      folderAnalytics: JSON.stringify(folder.analyticsMetrics || {}, null, 2)
-    };
+    const threadId = `folder_${id}_chat_${chatId}`; // kept for the response payload
 
     const isStreaming = stream === true || req.headers.accept?.includes('text/event-stream') || req.query.stream === 'true';
 
-    // RAG Pipeline doesn't support streaming yet, simulate a fallback
-    const result = await queryPipeline(message);
+    // Query RAG pipeline scoped to this folder's indexed documents
+    const result = await queryPipeline(message, ragDocumentIds.length > 0 ? ragDocumentIds : undefined);
 
     if (isStreaming) {
       res.setHeader('Content-Type', 'text/event-stream');

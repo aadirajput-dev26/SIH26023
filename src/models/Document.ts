@@ -9,7 +9,7 @@ export interface IDocument extends MongooseDocument {
   size: number;
   sourceUrl?: string;   // When uploaded via a public URL (link type)
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  gtwyResourceId?: string; // The _id returned by GTWY RAG API after resource creation
+  ragDocumentId?: string;  // The UUID returned by the RAG Pipeline after ingestion
   analytics?: any;
   createdAt: Date;
   updatedAt: Date;
@@ -24,7 +24,7 @@ const DocumentSchema = new Schema<IDocument>({
   size: { type: Number, default: 0 },
   sourceUrl: { type: String },
   status: { type: String, enum: ['pending', 'processing', 'completed', 'failed'], default: 'pending' },
-  gtwyResourceId: { type: String },
+  ragDocumentId: { type: String },
   analytics: { type: Schema.Types.Mixed },
 }, { timestamps: true });
 
