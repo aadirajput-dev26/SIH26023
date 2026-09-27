@@ -1,7 +1,24 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { documentQueue, reportQueue, fallbackJobs } from '../queues';
-import DocumentModel from '../models/Document';
 import FolderModel from '../models/Folder';
+
+/**
+ * Helper: find an embedded document by its _id across all Folder documents[].
+ * Returns the doc's current status or null if not found.
+ */
+async function getEmbeddedDocStatus(docId: string): Promise<{ status: string } | null> {
+  try {
+    const folder = await FolderModel.findOne(
+      { 'documents._id': new mongoose.Types.ObjectId(docId) },
+      { 'documents.$': 1 },
+    ).lean();
+    if (folder && folder.documents && folder.documents.length > 0) {
+      return { status: folder.documents[0].status };
+    }
+  } catch {}
+  return null;
+}
 
 const router = Router();
 
@@ -20,11 +37,11 @@ router.get('/:id', async (req, res) => {
       if (state === 'active') {
         if (fallbackJob.data?.documentId) {
           try {
-            const doc = await DocumentModel.findById(fallbackJob.data.documentId);
-            if (doc && doc.status === 'completed') {
+            const docStatus = await getEmbeddedDocStatus(fallbackJob.data.documentId);
+            if (docStatus?.status === 'completed') {
               state = 'completed';
               progress = 100;
-            } else if (doc && doc.status === 'failed') {
+            } else if (docStatus?.status === 'failed') {
               state = 'failed';
             }
           } catch {}
@@ -89,10 +106,10 @@ router.get('/:id', async (req, res) => {
       if (state === 'active') {
         if (job.data?.documentId) {
           try {
-            const doc = await DocumentModel.findById(job.data.documentId);
-            if (doc && doc.status === 'completed') {
+            const docStatus = await getEmbeddedDocStatus(job.data.documentId);
+            if (docStatus?.status === 'completed') {
               state = 'completed';
-            } else if (doc && doc.status === 'failed') {
+            } else if (docStatus?.status === 'failed') {
               state = 'failed';
             }
           } catch {}
@@ -128,13 +145,13 @@ router.get('/:id', async (req, res) => {
       const docId = parts[1];
       if (docId && docId.length === 24) {
         try {
-          const doc = await DocumentModel.findById(docId);
-          if (doc) {
+          const docStatus = await getEmbeddedDocStatus(docId);
+          if (docStatus) {
             return res.json({
               id: jobId,
               queue: 'document-processing',
-              state: doc.status === 'completed' ? 'completed' : (doc.status === 'failed' ? 'failed' : 'active'),
-              progress: doc.status === 'completed' ? 100 : 60,
+              state: docStatus.status === 'completed' ? 'completed' : (docStatus.status === 'failed' ? 'failed' : 'active'),
+              progress: docStatus.status === 'completed' ? 100 : 60,
             });
           }
         } catch {}
