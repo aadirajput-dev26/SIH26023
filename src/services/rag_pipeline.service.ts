@@ -32,6 +32,20 @@ const client = axios.create({
   timeout: 120000, // 2 min for large file uploads
 });
 
+// Interceptor for logging cURL and response debugging
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      console.error(`[RAG Service HTTP Error] Status ${error.response.status} from ${error.config?.url}`);
+      console.error(`[RAG Service Error Body]:`, typeof error.response.data === 'object' ? JSON.stringify(error.response.data) : error.response.data);
+    } else {
+      console.error(`[RAG Service Network/Timeout Error]: ${error.message}`);
+    }
+    return Promise.reject(error);
+  },
+);
+
 // ─── Document Ingestion ────────────────────────────────────────────────────────
 
 /**
@@ -53,6 +67,18 @@ export const ingestDocument = async (
   formData.append('declared_mime_type', mimeType);
   if (ragDocumentId) formData.append('document_id', ragDocumentId);
 
+  const fullUrl = `${RAG_URL}/documents/ingest`;
+  const curlCmd = `curl -X POST '${fullUrl}' \\
+  -H 'X-Api-Key: ${API_KEY}' \\
+  -F 'file=@${filePath}' \\
+  -F 'org_id=${ORG_ID}' \\
+  -F 'workspace_id=${WORKSPACE_ID}' \\
+  -F 'uploaded_by_user_id=${USER_ID}' \\
+  -F 'filename=${filename}' \\
+  -F 'declared_mime_type=${mimeType}'${ragDocumentId ? ` \\\n  -F 'document_id=${ragDocumentId}'` : ''}`;
+
+  console.log(`[RAG Service] Executing File Ingest Call:\n${curlCmd}`);
+
   const response = await client.post('/documents/ingest', formData, {
     headers: formData.getHeaders(),
     timeout: 180000, // 3 min for large docs
@@ -65,13 +91,22 @@ export const ingestDocument = async (
  * Returns { document_id, document_version_id, job_id, status }.
  */
 export const ingestUrl = async (url: string, ragDocumentId?: string) => {
-  const response = await client.post('/documents/ingest-url', {
+  const fullUrl = `${RAG_URL}/documents/ingest-url`;
+  const body = {
     url,
     org_id: ORG_ID,
     workspace_id: WORKSPACE_ID,
     uploaded_by_user_id: USER_ID,
     document_id: ragDocumentId,
-  });
+  };
+  const curlCmd = `curl -X POST '${fullUrl}' \\
+  -H 'X-Api-Key: ${API_KEY}' \\
+  -H 'Content-Type: application/json' \\
+  -d '${JSON.stringify(body)}'`;
+
+  console.log(`[RAG Service] Executing URL Ingest Call:\n${curlCmd}`);
+
+  const response = await client.post('/documents/ingest-url', body);
   return response.data as { document_id: string; document_version_id: string; job_id: string; status: string };
 };
 
@@ -82,6 +117,12 @@ export const ingestUrl = async (url: string, ragDocumentId?: string) => {
  * Returns the final status response.
  */
 export const checkDocumentStatus = async (ragDocId: string) => {
+  const fullUrl = `${RAG_URL}/documents/${ragDocId}/status`;
+  const curlCmd = `curl -X GET '${fullUrl}' \\
+  -H 'X-Api-Key: ${API_KEY}'`;
+
+  console.log(`[RAG Service] Checking Status:\n${curlCmd}`);
+
   const response = await client.get(`/documents/${ragDocId}/status`);
   return response.data as { overall_status: string; stage_details: any[] };
 };
@@ -115,14 +156,24 @@ export const queryPipeline = async (
   queryText: string,
   ragDocumentIds?: string[],
 ): Promise<{ answer: string; route_used: string; citations: any[]; no_evidence: boolean; confidence: number }> => {
-  const response = await client.post('/query', {
+  const fullUrl = `${RAG_URL}/query`;
+  const body = {
     query_text: queryText,
     scope: {
       org_id: ORG_ID,
       workspace_id: WORKSPACE_ID,
       document_ids: ragDocumentIds && ragDocumentIds.length > 0 ? ragDocumentIds : undefined,
     },
-  });
+  };
+
+  const curlCmd = `curl -X POST '${fullUrl}' \\
+  -H 'X-Api-Key: ${API_KEY}' \\
+  -H 'Content-Type: application/json' \\
+  -d '${JSON.stringify(body)}'`;
+
+  console.log(`[RAG Service] Executing Query Call:\n${curlCmd}`);
+
+  const response = await client.post('/query', body);
   return response.data;
 };
 
@@ -134,7 +185,8 @@ export const searchPipeline = async (
   ragDocumentIds?: string[],
   topK = 10,
 ) => {
-  const response = await client.post('/search', {
+  const fullUrl = `${RAG_URL}/search`;
+  const body = {
     query_text: queryText,
     scope: {
       org_id: ORG_ID,
@@ -142,6 +194,16 @@ export const searchPipeline = async (
       document_ids: ragDocumentIds && ragDocumentIds.length > 0 ? ragDocumentIds : undefined,
     },
     top_k: topK,
-  });
+  };
+
+  const curlCmd = `curl -X POST '${fullUrl}' \\
+  -H 'X-Api-Key: ${API_KEY}' \\
+  -H 'Content-Type: application/json' \\
+  -d '${JSON.stringify(body)}'`;
+
+  console.log(`[RAG Service] Executing Search Call:\n${curlCmd}`);
+
+  const response = await client.post('/search', body);
   return response.data;
 };
+
