@@ -40,7 +40,8 @@ app.get('/health', (req, res) => {
     env: {
       mongoUriConfigured: !!process.env.MONGO_URI,
       redisUrlConfigured: !!process.env.REDIS_URL,
-      gtwyApiKeyConfigured: !!process.env.GTWY_API_KEY,
+      ragHostConfigured: !!process.env.RAG_HOST_URL,
+      ragApiKeyConfigured: !!process.env.RAG_API_KEY,
       port: port,
     }
   });

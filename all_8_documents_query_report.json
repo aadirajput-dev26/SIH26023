@@ -1,0 +1,562 @@
+[
+  {
+    "docNumber": 1,
+    "title": "UI Live Test Content",
+    "type": "Raw Text (Direct Content)",
+    "documentId": "6abbdb4085f907413b57f233",
+    "ragDocumentId": "c32f4824-2b95-4d9b-89ef-bf9d2eeac666",
+    "query": "What was the open-cast mine production in Talcher coalfield for FY 2023-24?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "23def5c9-f2ec-4117-af54-59e905372a7e",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 24,
+          "page_end": 24,
+          "section_path": "",
+          "snippet": "Indicator | Value | Unit | Period | Source Context\n----------------------------------------\nAnnual production | 2,535 | kt | 2025-26 | Mine-wise Production, Table 4\nExploration coverage | 80.06 | % | 2025-26 | Mine-wise Production, Table 4\nAverage productivity | 2.13 | t/man-shift | 2025-26 | Mine-w",
+          "semantic_score": 0.042,
+          "keyword_score": 1,
+          "fused_score": 0.0306,
+          "rerank_score": 0.0306
+        },
+        {
+          "chunk_id": "47abb1a0-00d2-475a-a4c5-90478c7a36af",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 4,
+          "page_end": 4,
+          "section_path": "",
+          "snippet": "Indicator | Value | Unit | Period | Source Context\n----------------------------------------\nAnnual production | 1,714 | kt | 2025-26 | Mine-wise Production, Table 5\nExploration coverage | 91.96 | % | 2025-26 | Mine-wise Production, Table 5\nAverage productivity | 1.67 | t/man-shift | 2025-26 | Mine-w",
+          "semantic_score": 0.0419,
+          "keyword_score": 1,
+          "fused_score": 0.0301,
+          "rerank_score": 0.0301
+        },
+        {
+          "chunk_id": "19ead411-f6fd-424c-bbef-221c920cd761",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 16,
+          "page_end": 16,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 16\nManpower & Productivity\nManpower & Productivity — Table Group 1\nManpower & Productivity presents synthetic operational and geological observations for reporting year 2025. The dataset is\nintentionally structured to rese",
+          "semantic_score": 0.0321,
+          "keyword_score": 1.4,
+          "fused_score": 0.0285,
+          "rerank_score": 0.0285
+        }
+      ],
+      "total": 3,
+      "latency_ms": 1259,
+      "latencyMs": 1685
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 2602,
+      "latencyMs": 2641
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I could not locate the specific open-cast mine production figure for Talcher coalfield in FY 2023-24 within the uploaded documents.\n\n- Please upload the relevant report/document (e.g., Coal India annual report FY 2023-24 or Talcher Open Cast Mine production data) or provide its filename so I can extract the exact figure with a proper citation.\n- Once available, I will present the value (in MT) with the source reference.",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_1",
+      "latencyMs": 14347
+    }
+  },
+  {
+    "docNumber": 2,
+    "title": "CMPDI Exploration Directive Memo",
+    "type": "Field Memo (Direct Text)",
+    "documentId": "6abbd86a85f907413b57f232",
+    "ragDocumentId": "2b4631d9-43cd-499a-a8d4-1333a24fdd2e",
+    "query": "How many exploratory boreholes were completed in North Karanpura and what is the estimated coal reserve?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "ffa57ec1-b223-4289-9785-cc39ffbb3705",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 26,
+          "page_end": 26,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 26\nDrilling & Borehole Statistics\nDrilling & Borehole Statistics — Table Group 2\nDrilling & Borehole Statistics presents synthetic operational and geological observations for reporting year 2023. The dataset is\nintentional",
+          "semantic_score": -0.0282,
+          "keyword_score": 1.3,
+          "fused_score": 0.0284,
+          "rerank_score": 0.0284
+        },
+        {
+          "chunk_id": "8e77ed96-38f6-4243-afa1-b2113fcb70ae",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 6,
+          "page_end": 6,
+          "section_path": "",
+          "snippet": "Indicator | Value | Unit | Period | Source Context\n----------------------------------------\nAnnual production | 6,817 | kt | 2025-26 | Drilling & Borehole Statistics, Table 7\nExploration coverage | 63.75 | % | 2025-26 | Drilling & Borehole Statistics, Table 7\nAverage productivity | 5.39 | t/man-shif",
+          "semantic_score": 0.0036,
+          "keyword_score": 0.4,
+          "fused_score": 0.0272,
+          "rerank_score": 0.0272
+        },
+        {
+          "chunk_id": "25777e11-a23b-47ee-b1b7-4a1df4f3be83",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 6,
+          "page_end": 6,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 6\nDrilling & Borehole Statistics\nDrilling & Borehole Statistics — Table Group 1\nDrilling & Borehole Statistics presents synthetic operational and geological observations for reporting year 2021. The dataset is\nintentionall",
+          "semantic_score": -0.0325,
+          "keyword_score": 0.8,
+          "fused_score": 0.0271,
+          "rerank_score": 0.0271
+        }
+      ],
+      "total": 3,
+      "latency_ms": 636,
+      "latencyMs": 1227
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 2128,
+      "latencyMs": 2159
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I don’t have the information in the current context to answer that precisely.\n\nI could not find specific information regarding your request in the uploaded folder documents. Please ensure the relevant document is uploaded to the collection.\n\nIf you share the document (or the section that covers North Karanpura), I will extract and present:\n- Number of exploratory boreholes completed in North Karanpura (Nos.)\n- Estimated coal reserve (typically in MT), with any caveats or resource category if provided in the document\n\nIf you can point me to the exact report or paste the relevant excerpt, I’ll get you the figures right away.",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_2",
+      "latencyMs": 10988
+    }
+  },
+  {
+    "docNumber": 3,
+    "title": "Coal India Overview Link",
+    "type": "Web URL Link (text/html)",
+    "documentId": "6abbd86a85f907413b57f231",
+    "ragDocumentId": "f30bfab8-80bc-42a5-8b21-698560eab02a",
+    "query": "What is Coal India holding structure, production capacity, and historical context?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "19ead411-f6fd-424c-bbef-221c920cd761",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 16,
+          "page_end": 16,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 16\nManpower & Productivity\nManpower & Productivity — Table Group 1\nManpower & Productivity presents synthetic operational and geological observations for reporting year 2025. The dataset is\nintentionally structured to rese",
+          "semantic_score": 0.0402,
+          "keyword_score": 1.4,
+          "fused_score": 0.0323,
+          "rerank_score": 0.0323
+        },
+        {
+          "chunk_id": "c181f34b-82ad-45b6-9bf3-bac0117500ad",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 4,
+          "page_end": 4,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 4\nMine-wise Production\nMine-wise Production — Table Group 1\nMine-wise Production presents synthetic operational and geological observations for reporting year 2025. The dataset is intentionally\nstructured to resemble a tec",
+          "semantic_score": 0.0133,
+          "keyword_score": 1.6,
+          "fused_score": 0.0313,
+          "rerank_score": 0.0313
+        },
+        {
+          "chunk_id": "d0c11c39-6379-4c49-ad93-0ac372f49ec9",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 24,
+          "page_end": 24,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 24\nMine-wise Production\nMine-wise Production — Table Group 2\nMine-wise Production presents synthetic operational and geological observations for reporting year 2021. The dataset is intentionally\nstructured to resemble a te",
+          "semantic_score": 0.0093,
+          "keyword_score": 1.4,
+          "fused_score": 0.0293,
+          "rerank_score": 0.0293
+        }
+      ],
+      "total": 3,
+      "latency_ms": 1027,
+      "latencyMs": 1900
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 1977,
+      "latencyMs": 2003
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I couldn’t locate the specific details on Coal India’s holding structure, production capacity, and historical context in the documents currently uploaded to your collection.\n\nPlease upload the relevant document(s) (for example, Coal India Limited Annual Report, Corporate Structure/Org Chart, or CMPDI reports) and I will extract the exact information with citations.\n\nIf you’d like, I can also guide you on where to find the information within those documents:\n- Holding structure: look for sections on ownership (GoI/government stake), board composition, and the list of wholly owned subsidiaries.\n- Production capacity: search for installed/graded capacity figures, sanctioned capacity, and any notes on capacity utilization or regional/sectoral distribution.\n- Historical context: check the formation/history section, milestones (e.g., formation year, major reorganizations, status changes like Navratna/Mini/MiniRatna if applicable), and key policy milestones.\n\nWould you like me to proceed with locating these details once you upload the documents?",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_3",
+      "latencyMs": 21985
+    }
+  },
+  {
+    "docNumber": 4,
+    "title": "Geological Seam Survey Map",
+    "type": "Raster Image Asset (.png)",
+    "documentId": "6abbd86a85f907413b57f230",
+    "ragDocumentId": "42a00d0c-e309-4e1d-a654-2cc6bb1ece54",
+    "query": "What geological seam layout and borehole details are captured for Korba Block 3 and Singrauli?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "652a896b-dc75-4e5a-b024-845bf5f99488",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 3,
+          "page_end": 3,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 3\nRegional Production Statistics\nRegional Production Statistics — Table Group 1\nRegional Production Statistics presents synthetic operational and geological observations for reporting year 2024. The dataset is\nintentionall",
+          "semantic_score": -0.0037,
+          "keyword_score": 0.4,
+          "fused_score": 0.0269,
+          "rerank_score": 0.0269
+        },
+        {
+          "chunk_id": "1be199ed-860e-4c42-a9e7-21b81e15241c",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 27,
+          "page_end": 27,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 27\nReserve & Resource Estimation\nReserve & Resource Estimation — Table Group 2\nReserve & Resource Estimation presents synthetic operational and geological observations for reporting year 2024. The dataset is\nintentionally ",
+          "semantic_score": -0.0046,
+          "keyword_score": 0.3,
+          "fused_score": 0.0244,
+          "rerank_score": 0.0244
+        },
+        {
+          "chunk_id": "06223ebf-d9c9-4a46-a1b4-a7804fa2acba",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 35,
+          "page_end": 35,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 35\nMine Safety Statistics\nMine Safety Statistics — Table Group 2\nMine Safety Statistics presents synthetic operational and geological observations for reporting year 2026. The dataset is intentionally\nstructured to resembl",
+          "semantic_score": -0.0075,
+          "keyword_score": 0.3,
+          "fused_score": 0.024,
+          "rerank_score": 0.024
+        }
+      ],
+      "total": 3,
+      "latency_ms": 1589,
+      "latencyMs": 2261
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 2159,
+      "latencyMs": 2207
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I’m not finding specific seam layout and borehole details for Korba Block 3 and Singrauli in the currently uploaded documents.\n\nCould you please upload the relevant Geological Reports or block-wise data files? Specifically, I’d need either:\n- A geological seam layout diagram/chart for Korba Block 3 and Singrauli, and\n- Borehole logs or a borehole data table containing: BH ID, collar coordinates (X, Y, sometimes Z), drilled depth, intent (exploration/production), total depth, lithology/stratigraphy notes, and for each seam: seam name, top depth, bottom depth, thickness, and inclination if provided.\n\nIf you prefer, I can work from a provided dataset (PDFs, Excel sheets, or GIS files) and extract a concise summary. To speed things up, you can share fields like:\n- Block name\n- List of boreholes with: BH ID, collar depth, TD, coordinates, seam names, seam thicknesses\n- Any seam elevations or stratigraphic columns\n\nProposed output format once data is available:\n- Korba Block 3\n  - Geological seam layout\n    - Seam A: thickness (m), top depth (mRL), bottom depth (mRL)\n    - Seam B: thickness (m), top depth (mRL), bottom depth (mRL)\n    - ...\n  - Borehole details (summary table)\n    - BH ID | Collar (X, Y) | TD (m) | Seams encountered (name, top depth, bottom depth, thickness)\n- Singrauli\n  - Same structure as above\n\nI can then provide a compact, cited table or bullet list with the seam layout and borehole details.",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_4",
+      "latencyMs": 10837
+    }
+  },
+  {
+    "docNumber": 5,
+    "title": "Quarterly Coal Production Data",
+    "type": "Excel Spreadsheet (.xlsx)",
+    "documentId": "6abbd86985f907413b57f22f",
+    "ragDocumentId": "79dc5716-5a5c-44ce-860a-c7c66bacc369",
+    "query": "What are the coal production MT and overburden removal figures for BCCL, SECL, and NCL?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "c181f34b-82ad-45b6-9bf3-bac0117500ad",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 4,
+          "page_end": 4,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 4\nMine-wise Production\nMine-wise Production — Table Group 1\nMine-wise Production presents synthetic operational and geological observations for reporting year 2025. The dataset is intentionally\nstructured to resemble a tec",
+          "semantic_score": 0.0352,
+          "keyword_score": 1.3,
+          "fused_score": 0.0318,
+          "rerank_score": 0.0318
+        },
+        {
+          "chunk_id": "d0c11c39-6379-4c49-ad93-0ac372f49ec9",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 24,
+          "page_end": 24,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 24\nMine-wise Production\nMine-wise Production — Table Group 2\nMine-wise Production presents synthetic operational and geological observations for reporting year 2021. The dataset is intentionally\nstructured to resemble a te",
+          "semantic_score": 0.0296,
+          "keyword_score": 1.2,
+          "fused_score": 0.0313,
+          "rerank_score": 0.0313
+        },
+        {
+          "chunk_id": "4c35ea5a-fcb2-4236-b8cb-984882d425f8",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 32,
+          "page_end": 32,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 32\nWater Management\nWater Management — Table Group 2\nWater Management presents synthetic operational and geological observations for reporting year 2023. The dataset is intentionally\nstructured to resemble a technical mini",
+          "semantic_score": 0.0295,
+          "keyword_score": 0.9,
+          "fused_score": 0.0299,
+          "rerank_score": 0.0299
+        }
+      ],
+      "total": 3,
+      "latency_ms": 606,
+      "latencyMs": 1442
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 1965,
+      "latencyMs": 1992
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I could not find specific coal production (MT) and overburden removal (CuM) figures for BCCL, SECL, and NCL in the uploaded documents.\n\nPlease upload the relevant report or paste the sections that contain these figures (e.g., sector-wise / subsidiary production and OB removal data). Once available, I’ll extract and present them in a concise format, for example:\n\n- BCCL: Production (MT) — OB Removal (CuM)\n- SECL: Production (MT) — OB Removal (CuM)\n- NCL: Production (MT) — OB Removal (CuM)\n\nIf you can point me to the specific document name or provide the data, I’ll cite the exact sources and deliver the figures promptly.",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_5",
+      "latencyMs": 10259
+    }
+  },
+  {
+    "docNumber": 6,
+    "title": "Safety Review",
+    "type": "Markdown Report (.md)",
+    "documentId": "6abbd85785f907413b57f22e",
+    "ragDocumentId": "42f5b81e-f72d-44e5-a6ab-886a6c700283",
+    "query": "What was the monthly extraction volume, overburden removal, stripping ratio, and safety audit incidents in the Safety Review?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "507d7a01-f182-4ec4-8d95-43cf3f726b89",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 19,
+          "page_end": 19,
+          "section_path": "",
+          "snippet": "Parameter | 2021-22 | 2022-23 | 2023-24 | 2024-25 | 2025-26 | Unit | Confidence\n----------------------------------------\nCoal Recovery | 9003.86 | 10291.21 | 7937.83 | 9521.33 | 9273.54 | Mt | Medium\nGrade Quality | 5496.35 | 5750.42 | 5327.63 | 7067.43 | 6413.74 | m | Medium\nOverburden Removal | 88",
+          "semantic_score": 0.0265,
+          "keyword_score": 0.8,
+          "fused_score": 0.0315,
+          "rerank_score": 0.0315
+        },
+        {
+          "chunk_id": "0c707c56-445b-427f-9acb-e60f4cc265ff",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 14,
+          "page_end": 14,
+          "section_path": "",
+          "snippet": "Parameter | 2021-22 | 2022-23 | 2023-24 | 2024-25 | 2025-26 | Unit | Confidence\n----------------------------------------\nGrade Quality | 8618.52 | 7119.84 | 7833.86 | 7442.25 | 7785.07 | t | Medium\nSafety Incidents | 1964.28 | 1555.35 | 1557.14 | 1805.55 | 1527.31 | ha | Medium\nOverburden Removal | ",
+          "semantic_score": 0.0192,
+          "keyword_score": 0.8,
+          "fused_score": 0.0303,
+          "rerank_score": 0.0303
+        },
+        {
+          "chunk_id": "168d6851-10d5-4577-9a75-a66128fb1ea0",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 7,
+          "page_end": 7,
+          "section_path": "",
+          "snippet": "Parameter | 2021-22 | 2022-23 | 2023-24 | 2024-25 | 2025-26 | Unit | Confidence\n----------------------------------------\nDispatch | 4825.08 | 4743.69 | 3707.87 | 4163.08 | 3961.23 | t | High\nBoreholes Completed | 2347.05 | 2075.55 | 2422.4 | 2285.23 | 2195.49 | t | High\nOverburden Removal | 2591.79 ",
+          "semantic_score": 0.016,
+          "keyword_score": 0.4,
+          "fused_score": 0.0257,
+          "rerank_score": 0.0257
+        }
+      ],
+      "total": 3,
+      "latency_ms": 581,
+      "latencyMs": 1522
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 3054,
+      "latencyMs": 3087
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I could not find specific information regarding your request in the uploaded folder documents. Please ensure the relevant document is uploaded to the collection.\n\nIf you can provide the Safety Review document (or its exact filename), I will extract and present:\n- Monthly extraction volume (MT)\n- Overburden removal (CuM)\n- Stripping ratio\n- Safety audit incidents\n\nI will format the results as bullet points and cite the exact sections or tables from the document.",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_6",
+      "latencyMs": 9122
+    }
+  },
+  {
+    "docNumber": 7,
+    "title": "synthetic mining report 35 pages (Batch A)",
+    "type": "Comprehensive PDF Report (.pdf)",
+    "documentId": "6abbd727ab702152a704bf06",
+    "ragDocumentId": "dcc33d2e-0f64-4e45-8ec2-400cfab82ffe",
+    "query": "What are the overburden removal, grade quality, and safety statistics across 2021-2026 reporting periods?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "4c35ea5a-fcb2-4236-b8cb-984882d425f8",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 32,
+          "page_end": 32,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 32\nWater Management\nWater Management — Table Group 2\nWater Management presents synthetic operational and geological observations for reporting year 2023. The dataset is intentionally\nstructured to resemble a technical mini",
+          "semantic_score": 0.0475,
+          "keyword_score": 1.1,
+          "fused_score": 0.0267,
+          "rerank_score": 0.0267
+        },
+        {
+          "chunk_id": "d0c11c39-6379-4c49-ad93-0ac372f49ec9",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 24,
+          "page_end": 24,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 24\nMine-wise Production\nMine-wise Production — Table Group 2\nMine-wise Production presents synthetic operational and geological observations for reporting year 2021. The dataset is intentionally\nstructured to resemble a te",
+          "semantic_score": 0.0421,
+          "keyword_score": 1.2,
+          "fused_score": 0.0261,
+          "rerank_score": 0.0261
+        },
+        {
+          "chunk_id": "ffa57ec1-b223-4289-9785-cc39ffbb3705",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 26,
+          "page_end": 26,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 26\nDrilling & Borehole Statistics\nDrilling & Borehole Statistics — Table Group 2\nDrilling & Borehole Statistics presents synthetic operational and geological observations for reporting year 2023. The dataset is\nintentional",
+          "semantic_score": 0.0383,
+          "keyword_score": 1.6,
+          "fused_score": 0.0261,
+          "rerank_score": 0.0261
+        }
+      ],
+      "total": 3,
+      "latency_ms": 593,
+      "latencyMs": 1674
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 2012,
+      "latencyMs": 2051
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I couldn’t locate the specific 2021–2026 statistics for overburden removal, grade quality, and safety in the current uploaded documents. Please upload the relevant reports (or specify exact document names) so I can pull the exact figures and present them year-by-year with proper citations.\n\nIf you already have the data, you can share it in any of these formats and I’ll compile it into a clean summary:\n- A per-year list (2021, 2022, 2023, 2024, 2025, 2026) with:\n  - Overburden removal (CuM)\n  - Grade quality metrics (e.g., average GCV, ash content, VM; specify units)\n  - Safety statistics (e.g., LTIs, MTCs, fatalities, near-misses, TRIR, days lost, safety trainings)\n- Or a small table/CSV with columns: Year, Overburden_Removal_CuM, Grade_Quality_Metric1, Grade_Quality_Metric2, LTIs, Fatalities, TRIR, Near_Misses, Days_Lost, Trainings.\n\nHere is a ready-to-use template you can fill in, one line per year (2021–2026):\n\n- Year 2021\n  - Overburden removal (CuM): [value]\n  - Grade quality metrics: [e.g., Avg GCV (kcal/kg) = [value], Avg ash (%) = [value]]\n  - Safety statistics: LTIs = [value], Fatalities = [value], TRIR = [value], Near-misses = [value], Days Lost = [value], Trainings conducted = [value]\n\n- Year 2022\n  - Overburden removal (CuM): [value]\n  - Grade quality metrics: [values]\n  - Safety statistics: [values]\n\n- Year 2023\n  - Overburden removal (CuM): [value]\n  - Grade quality metrics: [values]\n  - Safety statistics: [values]\n\n- Year 2024\n  - Overburden removal (CuM): [value]\n  - Grade quality metrics: [values]\n  - Safety statistics: [values]\n\n- Year 2025\n  - Overburden removal (CuM): [value]\n  - Grade quality metrics: [values]\n  - Safety statistics: [values]\n\n- Year 2026\n  - Overburden removal (CuM): [value]\n  - Grade quality metrics: [values]\n  - Safety statistics: [values]\n\nIf you prefer, I can also perform trend analyses once numbers are provided:\n- Year-over-year changes (percent change for overburden removal)\n- Trend lines or CAGR for 2021–2026\n- Safety indicators trend (e.g., TRIR and LTIs over time)\n- Grade quality stability or improvement (e.g., changes in GCV, ash, etc.)\n\nPlease share the relevant documents or the numeric data, and I’ll deliver a concise, cited summary.",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_7",
+      "latencyMs": 15596
+    }
+  },
+  {
+    "docNumber": 8,
+    "title": "synthetic mining report 35 pages (Batch B)",
+    "type": "Technical Mining PDF (.pdf)",
+    "documentId": "6abbd2a3eabfa9452bab1832",
+    "ragDocumentId": "e2e53b67-55fb-4edb-8f05-5ee85cc6bf0b",
+    "query": "What are the risk indicators, environmental monitoring observations, and dispatch logistics for 2023-2025?",
+    "searchResult": {
+      "results": [
+        {
+          "chunk_id": "2e80f0c6-dd9a-4b6e-a6cf-bcb703db8dcb",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 12,
+          "page_end": 12,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 12\nWater Management\nWater Management — Table Group 1\nWater Management presents synthetic operational and geological observations for reporting year 2021. The dataset is intentionally\nstructured to resemble a technical mini",
+          "semantic_score": 0.0173,
+          "keyword_score": 1.5,
+          "fused_score": 0.0307,
+          "rerank_score": 0.0307
+        },
+        {
+          "chunk_id": "4c35ea5a-fcb2-4236-b8cb-984882d425f8",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 32,
+          "page_end": 32,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 32\nWater Management\nWater Management — Table Group 2\nWater Management presents synthetic operational and geological observations for reporting year 2023. The dataset is intentionally\nstructured to resemble a technical mini",
+          "semantic_score": 0.0041,
+          "keyword_score": 1.5,
+          "fused_score": 0.0295,
+          "rerank_score": 0.0295
+        },
+        {
+          "chunk_id": "6f2e3c5f-d195-493c-911e-a63c944805e0",
+          "document_id": "b8784372-7c20-4021-b8a2-fd9d757f0eec",
+          "document_name": "Test",
+          "page_start": 8,
+          "page_end": 8,
+          "section_path": "",
+          "snippet": "CMPDI-style Synthetic Mining & Geological Statistical Report — TEST DATA\nPage 8\nCoal Quality & Grade Analysis\nCoal Quality & Grade Analysis — Table Group 1\nCoal Quality & Grade Analysis presents synthetic operational and geological observations for reporting year 2023. The dataset is\nintentionally s",
+          "semantic_score": 0.0059,
+          "keyword_score": 1.5,
+          "fused_score": 0.0294,
+          "rerank_score": 0.0294
+        }
+      ],
+      "total": 3,
+      "latency_ms": 658,
+      "latencyMs": 1967
+    },
+    "ragResult": {
+      "answer": "NO_EVIDENCE_FOUND: The provided documents do not contain sufficient information to answer this question.",
+      "route_used": "rag",
+      "no_evidence": true,
+      "citations": [],
+      "structured_evidence": [],
+      "confidence": 1,
+      "latency_ms": 2235,
+      "latencyMs": 2273
+    },
+    "chatResult": {
+      "message": "Chat completed",
+      "reply": "I couldn’t locate specific information on risk indicators, environmental monitoring observations, or dispatch logistics for 2023–2025 in the uploaded documents.\n\nPlease upload the relevant document(s) (e.g., Mine Plan or Project Report for 2023–2025, Environmental Monitoring Report 2023–25, or Dispatch Logistics Plan) or share the exact file names. Once available, I will extract the exact sections with citations and present them clearly (risk indicators, monitoring observations, and dispatch logistics) in a structured format.\n\nIf you’re unsure which file contains these sections, you can list the documents you have, and I’ll help identify the right ones to use.",
+      "threadId": "folder_6ab8d9bec6a8a80cc9b085df_chat_eval_doc_8",
+      "latencyMs": 10994
+    }
+  }
+]

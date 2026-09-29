@@ -154,12 +154,70 @@ export const callGtwyChatAgent = async (agentId: string, threadId: string, userP
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      const errText = await res.text();
+      const errText = await res.text().catch(() => '');
       throw new Error(`GTWY Agent error: ${res.status} ${errText}`);
     }
 
-    const rawText = await res.text();
-    return rawText;
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json') && !contentType.includes('event-stream')) {
+      const json = await res.json();
+      return extractGtwyContent(json);
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) {
+      const rawText = await res.text();
+      return rawText;
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let accumulatedContent = '';
+    let endContent = '';
+    let shouldStop = false;
+
+    while (!shouldStop) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        const dataStr = trimmed.substring(6).trim();
+
+        if (dataStr === '[DONE]') {
+          shouldStop = true;
+          break;
+        }
+
+        try {
+          const parsed = JSON.parse(dataStr);
+          if (parsed.event === 'done') {
+            shouldStop = true;
+            break;
+          }
+          if (parsed.event === 'end') {
+            endContent = parsed?.response?.data?.content || parsed?.data?.content || '';
+            shouldStop = true;
+            break;
+          }
+          if (parsed.event === 'delta' && parsed.content) {
+            accumulatedContent += parsed.content;
+          } else if (parsed.event === 'message' && parsed.data?.content) {
+            accumulatedContent += parsed.data.content;
+          } else if (parsed.content && parsed.event !== 'reasoning' && parsed.event !== 'tool_call' && parsed.event !== 'tool_result') {
+            accumulatedContent += parsed.content;
+          }
+        } catch {}
+      }
+    }
+
+    await reader.cancel().catch(() => {});
+    return endContent || accumulatedContent;
   } catch (err: any) {
     clearTimeout(timeoutId);
     throw err;
@@ -190,7 +248,7 @@ export const streamGtwyChatAgent = async (
   });
 
   if (!res.ok) {
-    const errorText = await res.text();
+    const errorText = await res.text().catch(() => '');
     throw new Error(`GTWY Agent error: ${res.status} ${errorText}`);
   }
 
@@ -200,13 +258,13 @@ export const streamGtwyChatAgent = async (
   const decoder = new TextDecoder();
   let buffer = '';
   let fullResponse = '';
+  let shouldStop = false;
 
-  while (true) {
+  while (!shouldStop) {
     const { done, value } = await reader.read();
     if (done) break;
 
-    const chunk = decoder.decode(value, { stream: true });
-    buffer += chunk;
+    buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split('\n');
     buffer = lines.pop() || '';
 
@@ -214,9 +272,27 @@ export const streamGtwyChatAgent = async (
       const trimmed = line.trim();
       if (!trimmed || !trimmed.startsWith('data: ')) continue;
       const dataStr = trimmed.substring(6).trim();
-      if (dataStr === '[DONE]') continue;
+
+      if (dataStr === '[DONE]') {
+        shouldStop = true;
+        break;
+      }
+
       try {
         const parsed = JSON.parse(dataStr);
+        if (parsed.event === 'done') {
+          shouldStop = true;
+          break;
+        }
+        if (parsed.event === 'end') {
+          const endText = parsed?.response?.data?.content || parsed?.data?.content;
+          if (endText && !fullResponse) {
+            if (onDelta) onDelta(endText);
+            fullResponse += endText;
+          }
+          shouldStop = true;
+          break;
+        }
         // Only stream delta content as instructed (skip reasoning and others)
         if (parsed.event === 'delta' && parsed.content) {
           if (onDelta) onDelta(parsed.content);
@@ -229,6 +305,7 @@ export const streamGtwyChatAgent = async (
     }
   }
 
+  await reader.cancel().catch(() => {});
   return fullResponse;
 };
 

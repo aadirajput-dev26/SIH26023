@@ -39,7 +39,11 @@ export async function dispatchDocumentJob(data: any): Promise<{ id: string }> {
 
   if (isRedisReady()) {
     try {
-      const job = await documentQueue.add('process-document', data, { jobId });
+      const job = await documentQueue.add('process-document', data, {
+        jobId,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+      });
       return { id: (job.id || jobId) as string };
     } catch (queueErr: any) {
       console.warn('[DocumentQueue] BullMQ dispatch notice, using in-process execution:', queueErr.message);

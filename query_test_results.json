@@ -1,0 +1,66 @@
+[
+  {
+    "docIndex": 1,
+    "title": "UI Live Test Content",
+    "query": "What was the open-cast mine production in Talcher coalfield for FY 2023-24?",
+    "status": 200,
+    "latencyMs": 12587,
+    "reply": "I could not find specific information regarding the open-cast mine production for Talcher coalfield in FY 2023-24 within the uploaded documents.\n\nPlease upload the relevant document (e.g., MCL Annual Report FY 2023-24 or a Talcher field performance report) or share the exact excerpt. Once available, I’ll extract the FY 2023-24 open-cast production figure and cite the source. If you’d like, I can also guide you on where to look in the report (e.g., sections listing production by field and by mining method)."
+  },
+  {
+    "docIndex": 2,
+    "title": "CMPDI Exploration Directive Memo",
+    "query": "How many exploratory boreholes were completed across North Karanpura coalfield and what is the estimated coal reserve?",
+    "status": 200,
+    "latencyMs": 11094,
+    "reply": "I couldn’t locate the exact figures in the available documents you uploaded.\n\nCould you please provide the specific document name or upload the report that covers North Karanpura (e.g., feasibility/annual report)? With that, I can extract:\n\n- The total number of exploratory boreholes completed across the North Karanpura coalfield.\n- The estimated coal reserve (e.g., MT, with breakdown if available into proved/indicated if shown).\n\nIf you’re unsure which file to share, you can paste the relevant section or provide the document title, and I’ll pull the required data."
+  },
+  {
+    "docIndex": 3,
+    "title": "Coal India Overview Link",
+    "query": "What information does the workspace have on Coal India production, imports, and holding structure?",
+    "status": 200,
+    "latencyMs": 18543,
+    "reply": "I could not find specific information regarding Coal India production, imports, and holding structure in the uploaded documents.\n\nPlease upload one or more of the following if available, or share document names:\n- Coal India Limited Annual Report (latest year)\n- Production Statistics by mine/region (MT, YoY trends)\n- Imports data (volumes by year, sources, unit costs)\n- Corporate/holding structure documents (parent company plus subsidiaries, shareholding pattern)\n\nOnce available, I can extract and present:\n- Production: total MT, breakouts by subsidiary/region, quarterly vs. annual trends\n- Imports: total import volumes (MT), major sourcing countries, any price/cost notes\n- Holding structure: list of subsidiaries under CIL, governance/ownership details, any restructuring notes\n\nIf you prefer, you can paste relevant excerpts here and I’ll summarize them with key figures and citations."
+  },
+  {
+    "docIndex": 4,
+    "title": "Geological Seam Survey Map",
+    "query": "What geological details and topographical assets are available for the seam survey in the workspace?",
+    "status": 200,
+    "latencyMs": 10545,
+    "reply": "I could not find specific information regarding your request in the uploaded folder documents. Please ensure the relevant document is uploaded to the collection.\n\nIf you can share the seam survey-related documents or specify the project/workspace, I can extract and summarize the available geological details and topographical assets. Common items I would look for include:\n- Geological details: lithology, stratigraphy, mineralization zones, structural features (faults, fractures), seam thickness, seam mineral content, groundwater conditions, and borehole logs.\n- Topographical assets: DEM/topographic maps, contour intervals, elevation models, drainage features, surface roughness, and cross-sections."
+  },
+  {
+    "docIndex": 5,
+    "title": "Quarterly Coal Production Data",
+    "query": "What are the coal production MT and overburden removal numbers for BCCL, SECL, and NCL?",
+    "status": 200,
+    "latencyMs": 12618,
+    "reply": "I could not find specific information regarding your request in the uploaded folder documents. Please ensure the relevant document is uploaded to the collection.\n\nIf you can share the year/timeframe (e.g., FY 2022-23, FY 2023-24) or upload the respective annual/performance reports for BCCL, SECL, and NCL, I will extract and present:\n\n- Coal production (MT) for each of BCCL, SECL, and NCL\n- Overburden removal (CuM) for each of BCCL, SECL, and NCL\n\n formatted with bullet points and sources."
+  },
+  {
+    "docIndex": 6,
+    "title": "Safety Review",
+    "query": "What were the extraction volume, stripping ratio, and safety audit incidents reported in the Safety Review?",
+    "status": 200,
+    "latencyMs": 12224,
+    "reply": "I could not find specific information regarding your request in the uploaded folder documents. Please ensure the relevant Safety Review document is uploaded to the collection.\n\nIf you can provide the exact Safety Review file (e.g., Safety_Review FY20XX.pdf) or paste the relevant section, I will extract and present:\n\n- Extraction volume (MT)\n- Stripping ratio (CuM/MT or equivalent)\n- Safety audit incidents (count and any available details such as severity) \n\nAlternatively, you can share the page/section containing the Safety Review data, and I will summarize it for you."
+  },
+  {
+    "docIndex": 7,
+    "title": "synthetic mining report 35 pages (Part 1)",
+    "query": "Summarize the coal import-export analytics and domestic demand metrics detailed in the synthetic mining report.",
+    "status": 200,
+    "latencyMs": 15481,
+    "reply": "I could not find specific information about coal import-export analytics or domestic demand metrics from a \"synthetic mining report\" in the currently uploaded documents. Please upload the exact report (or share the filename/path) so I can extract and summarize the figures.\n\nIf you prefer, I can still outline the exact summary I will produce once the report is available:\n\n- Executive snapshot\n  - Period covered (e.g., FY/Calendar year)\n  - Key indicators: total imports (MT), total exports (MT), net imports, domestic demand (MT)\n\n- Import-Export Analytics\n  - Total coal imports (MT) and YoY/QoQ growth\n  - Imports by origin country/region (MT and share %)\n  - Major import ports and routing (port-wise volumes)\n  - Exports (MT) and destinations (if applicable)\n  - Net trade balance (Imports − Exports)\n  - Price indicators (average landed price, if provided)\n  - Regulatory or policy notes impacting trade (e.g., duties, restrictions)\n\n- Domestic Demand Metrics\n  - Total domestic demand (MT) and YoY/QoQ growth\n  - Sectoral breakdown (e.g., Power, Steel, Cement, Others) with shares\n  - Regional/statewise demand distribution (top consuming regions)\n  - Seasonal/monthly pattern (if shown) and peak demand periods\n  - Stock/procurement posture (if included) and projected demand vs. availability\n\n- Data quality and sources\n  - Data sources cited in the report\n  - Units, conversion factors, and any caveats\n\nWhat I need from you to proceed:\n- Upload the synthetic mining report file (or specify its exact name or repository path).\n- If possible, indicate the time period the analysis covers and the units used (MT, CuM, etc.).\n\nOnce I have the document, I’ll provide a concise, bullet-point summary with any small tables for key metrics and include precise citations to the source document/section."
+  },
+  {
+    "docIndex": 8,
+    "title": "synthetic mining report 35 pages (Part 2)",
+    "query": "What are the key extracted metrics and trends for coal despatch, pit-head reserves, and Coking vs Non-Coking coal?",
+    "status": 200,
+    "latencyMs": 13980,
+    "reply": "I could not find specific information regarding your request in the uploaded folder documents. Please ensure the relevant document is uploaded to the collection.\n\nIf you share the relevant reports (e.g., coal despatch summaries, pit-head reserves statements, and Coking vs Non-Coking coal split), I will extract and summarize the key metrics and trends. In the meantime, here is a ready-to-fill template you can use to capture the metrics and trends:\n\n- **Coal Despatch**\n  - Total despatch (MT) for the period\n  - Despatch by type: pithead vs. off-take/market (MT)\n  - Despatch growth trend: YoY or QoQ change (%)\n  - Despatch realization vs. plan (percentage)\n  - Regional distribution of despatch (MT by region)\n  - Despatch by mine/region (top contributors)\n\n- **Pit-head Reserves**\n  - Pit-head reserves (MT) by category/zone\n  - Reserve depletion during the period (MT)\n  - Reserve replacement/additions (MT)\n  - Reserve life index or reserve-to-production ratio\n  - Grade distribution or quality indicators if available (e.g., GCV bands)\n  - Any new reserve declarations or revisions (dates and amounts)\n\n- **Coking vs Non-Coking Coal**\n  - Split of despatch by coal type (Coking MT vs Non-Coking MT)\n  - Share of total despatch: Coking (%) and Non-Coking (%)\n  - Growth trend for each type (YoY or QoQ %)\n  - Reserve split by coal type (MT and share)\n  - Any price/market indicators or demand signals by type (if provided)\n\nIf you’d like, I can also provide a small table format you can paste numbers into, and I can generate a concise narrative summary once you supply the figures. \n\nWould you like me to proceed with a structured extraction once you upload the relevant documents, or would you prefer I draft the summary framework for a specific reporting period (e.g., FY 2023-24, FY 2024-25)?"
+  }
+]

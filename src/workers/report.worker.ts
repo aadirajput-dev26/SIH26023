@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import FolderModel from '../models/Folder';
 import DocumentModel from '../models/Document';
 import { createRedisConnection } from '../config/redis';
+import { callGtwyChatAgent, extractGtwyContent } from '../services/gtwy.service';
 import { queryPipeline } from '../services/rag_pipeline.service';
 
 dotenv.config();
@@ -11,12 +12,7 @@ const connection = createRedisConnection('report-worker');
 
 /**
  * Self-contained report generation task.
- *
- * Flow:
- *   1. Load folder + all its documents from MongoDB
- *   2. Collect all ragDocumentIds from completed docs
- *   3. Query the RAG pipeline with a rich report prompt scoped to those docs
- *   4. Store the generated report in the Folder document
+ * Calls GTWY Report Generation Agent with fallback to local RAG pipeline.
  */
 export async function processReportTask(data: any, onProgress?: (progress: number) => void) {
   const { folderId, title, prompt, instructions, reportType, audience, format, customVariables } = data;
@@ -46,58 +42,63 @@ export async function processReportTask(data: any, onProgress?: (progress: numbe
 
     if (onProgress) onProgress(25);
 
-    // ── Step 2: Build a rich report prompt ───────────────────────────────────
+    // ── Step 2: Build GTWY Agent Variables & Prompt ──────────────────────────
     const reportTitle = title || `Analysis Report - ${folder.name}`;
-    const userInstructions = instructions || prompt || 'Generate a comprehensive, professional report.';
+    const userPrompt = prompt || instructions || 'Generate a comprehensive, detailed, professional report based on the following folder context and documents.';
 
-    const fullPrompt = [
-      `You are an expert report writer for the coal mining domain.`,
-      `Generate a complete, detailed ${reportType || 'Comprehensive Operational Report'} in ${format || 'Markdown'} format.`,
-      `Report Title: ${reportTitle}`,
-      `Target Audience: ${audience || 'Executive & Mine Leadership'}`,
-      ``,
-      `User Instructions: ${userInstructions}`,
-      ``,
-      `Folder: ${folder.name}`,
-      folder.description ? `Folder Description: ${folder.description}` : '',
-      ``,
-      `Folder Analytics Summary:`,
-      JSON.stringify(folder.analyticsMetrics || {}, null, 2),
-      ``,
-      `Documents in this folder (${docs.length} total):`,
-      JSON.stringify(documentsSummary, null, 2),
-      ``,
-      `Using the above context and the indexed document content, produce a thorough professional report.`,
-      `Include executive summary, key findings, metrics analysis, recommendations, and conclusion.`,
-      ...(customVariables ? [`Additional context: ${JSON.stringify(customVariables)}`] : []),
-    ]
-      .filter(Boolean)
-      .join('\n');
+    const agentId = process.env.GTWY_REPORT_GENERATION_AGENT_ID || '6a9f17ef0869a6b2a2333e34';
+    const threadId = `folder_${folder._id}_report_${Date.now()}`;
 
-    if (onProgress) onProgress(40);
+    const variables = {
+      folderName: folder.name,
+      folderDescription: folder.description || '',
+      reportTitle,
+      userInstructions: instructions || prompt || '',
+      instructions: instructions || prompt || '',
+      prompt: prompt || instructions || '',
+      reportType: reportType || 'Comprehensive Operational Report',
+      audience: audience || 'Executive & Mine Leadership',
+      format: format || 'Detailed Markdown Report',
+      existingReportContent: customVariables?.existingReportContent || '',
+      documentsList: JSON.stringify(documentsSummary, null, 2),
+      folderAnalytics: JSON.stringify(folder.analyticsMetrics || {}, null, 2),
+      ...(customVariables || {}),
+    };
 
-    // ── Step 3: Query RAG pipeline (scoped to folder docs if available) ───────
-    console.log(
-      `[ReportTask] Calling RAG pipeline for report generation. Scoped docs: ${ragDocumentIds.length}`,
-    );
-    const result = await queryPipeline(
-      fullPrompt,
-      ragDocumentIds.length > 0 ? ragDocumentIds : undefined,
-    );
+    if (onProgress) onProgress(45);
+
+    // ── Step 3: Call GTWY Report Generation Agent ────────────────────────────
+    console.log(`[ReportTask] Calling GTWY Report Generation Agent (${agentId}) for folder: ${folder.name}...`);
+    let reportContent = '';
+    try {
+      const gtwyData = await callGtwyChatAgent(agentId, threadId, userPrompt, variables);
+      reportContent = extractGtwyContent(gtwyData);
+    } catch (gtwyErr: any) {
+      console.warn(`[ReportTask] GTWY Report Agent notice: ${gtwyErr.message}. Attempting RAG pipeline fallback.`);
+      const result = await queryPipeline(userPrompt, {
+        collectionId: folder.ragCollectionId,
+        documentIds: ragDocumentIds.length > 0 ? ragDocumentIds : undefined,
+      });
+      reportContent = result.answer || 'Report generated with no content.';
+    }
 
     if (onProgress) onProgress(85);
-
-    const reportContent = result.answer || 'Report generated with no content.';
 
     // ── Step 4: Save report to Folder ─────────────────────────────────────────
     const generatedReport = {
       title: reportTitle,
-      content: reportContent,
+      content: reportContent || 'Report generated with no content.',
       createdAt: new Date(),
     };
 
     folder.reports = folder.reports || [];
-    folder.reports.push(generatedReport as any);
+    const existingIndex = folder.reports.findIndex((r: any) => r.title === reportTitle);
+    if (existingIndex !== -1 && customVariables?.existingReportContent) {
+      folder.reports[existingIndex].content = reportContent || folder.reports[existingIndex].content;
+      folder.reports[existingIndex].createdAt = new Date();
+    } else {
+      folder.reports.push(generatedReport as any);
+    }
     await folder.save();
 
     if (onProgress) onProgress(100);
